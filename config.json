@@ -1,0 +1,28 @@
+{
+  "benchmark": {
+    "asterixDB": {
+      "startCommand": "tools/start-rutherfordium.sh",
+      "stopCommand": "tools/stop-rutherfordium.sh",
+      "copyConfigCommand": "tools/copy-config.sh",
+      "nodeController": {
+        "address": "rutherfordium.ics.uci.edu",
+        "port": 19002
+      },
+      "sshUserName": "ggalvizo",
+      "allNodesInCluster": ["rutherfordium", "vanadium.ics.uci.edu"],
+      "undoScript": "undo-all-tests.1.sqlpp"
+    },
+    "mongoDB": {
+
+    },
+    "couchbase": {
+
+    }
+  },
+  "analysisAsterixCluster": {
+    "nodeController": {
+        "address": "ilima.kona.local",
+        "port": 19002
+      }
+  }
+}

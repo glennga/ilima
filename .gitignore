@@ -1,0 +1,5 @@
+results/*
+benchmark/*
+.idea/*
+venv/*
+tools/*

@@ -1,2 +1,2 @@
 # ilima
-Collection of scripts to help manage AsterixDB benchmarking and experimentation.
+Collection of scripts to help manage my database benchmarking and experimentation.
