@@ -3,3 +3,4 @@ benchmark/*
 .idea/*
 venv/*
 tools/*
+ilima.log

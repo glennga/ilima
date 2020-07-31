@@ -8,6 +8,8 @@ import os
 import subprocess
 import requests
 import time
+import socket
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +28,14 @@ def _call_subprocess_with_logger_output(command):
 
 
 class _AbstractDBBenchmarkExecutor(abc.ABC):
-    def __init__(self, results_dir):
+    def __init__(self, results_dir, results_suffix, **kwargs):
         self.results_fp = open(results_dir + '/results.json', 'w')
+        self.results_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.results_suffix = results_suffix
+        self.kwargs = kwargs
+
+        self.results_socket.connect((kwargs['analysisAsterixCluster']['nodeController']['address'],
+                                     kwargs['analysisAsterixCluster']['feedSocketPort']))
 
     @staticmethod
     def _aggregate_by_group(benchmark_scripts):
@@ -45,13 +53,25 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
         return benchmarks_by_group
 
     def _log_result(self, result, **kwargs):
+        result['queryExecuted'] = kwargs['query_executed']
         result['startTime'] = str(kwargs['start_time'])
         result['endTime'] = str(datetime.datetime.now())
         result['benchmarkGroup'] = kwargs['group_id']
         result['numberOfRuns'] = kwargs['number_of_runs']
         result['overviewFromScript'] = kwargs['overview_from_script']
+
+        # To the results file..
+        logger.debug('Recording result to disk.')
         json.dump(result, self.results_fp)
         self.results_fp.write('\n')
+
+        # To the analysis cluster. We must provide our own key.
+        result['id'] = str(uuid.uuid4())
+        logger.debug('Recording result to cluster through feed.')
+        if not self.results_socket.sendall(json.dumps(result).encode('ascii')) is None:
+            logger.warning('Analysis cluster did not accept record!')
+        else:
+            logger.info('Result successfully sent to cluster.')
 
     def _invoke_within_group(self, executor, group):
         with open(group[0], 'r') as script_fp:
@@ -68,13 +88,15 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
                 logger.info(f'Running {benchmark_script}, run number {run_number}.')
                 with open(benchmark_script, 'r') as script_fp:
                     time_issued = datetime.datetime.now()
-                    result = executor(script_fp, group_id)
+                    query = script_fp.read()
+                    result = executor(query, group_id)
                     logger.debug('Result from execution: ' + str(result))
                     self._log_result(result, **{
                         'start_time': time_issued,
                         'group_id': group_id,
                         'number_of_runs': number_of_runs,
-                        'overview_from_script': overview_from_script
+                        'overview_from_script': overview_from_script,
+                        'query_executed': query
                     })
                 time.sleep(1)
 
@@ -95,6 +117,9 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
         self._invoke()
         self._finalize()
 
+        self.results_fp.close()
+        self.results_socket.close()
+
 
 class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
     def _generate_results_dir(self):
@@ -106,12 +131,13 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
                                    str(kwargs['benchmark']['asterixDB']['nodeController']['port'])
         self.node_controller_uri = 'http://' + self.node_controller_uri + '/query/service'
 
-        self.results_dir = args[1] + '/' + datetime.datetime.now().strftime('A-%Y-%m-%d_%H-%M-%S')
+        results_suffix = datetime.datetime.now().strftime('A-%Y-%m-%d_%H-%M-%S')
+        self.results_dir = args[1] + '/' + results_suffix
         self.benchmark_dir = args[0]
         self.kwargs = kwargs
 
         self._generate_results_dir()
-        super().__init__(self.results_dir)
+        super().__init__(self.results_dir, results_suffix, **kwargs)
 
     def _startup(self):
         logger.info('Running Ansible STOP command.')
@@ -133,9 +159,9 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
 
         return [undo_script, self._aggregate_by_group(benchmark_scripts)]
 
-    def _execute_benchmark(self, script_fp, group_id):
+    def _execute_benchmark(self, query, group_id):
         return requests.post(self.node_controller_uri, {
-            'statement': script_fp.read(),
+            'statement': query,
             'client_context_id': str(group_id),
             'plan-format': 'STRING',
             'expression-tree': True,

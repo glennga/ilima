@@ -23,6 +23,11 @@
     "nodeController": {
         "address": "ilima.kona.local",
         "port": 19002
-      }
+      },
+    "feedSocketPort": 19050,
+    "targetDataset": {
+      "dataverse": "BenchmarkAnalysis",
+      "dataset": "ResultsDataset"
+    }
   }
 }
