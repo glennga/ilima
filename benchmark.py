@@ -149,8 +149,14 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
 
     def _get_benchmark_scripts(self):
         undo_script = self.kwargs['benchmark']['asterixDB']['undoScript']
+        scripts_to_exclude = {self.kwargs['benchmark']['asterixDB']['undoScript']}
+        for script in self.kwargs['benchmark']['asterixDB']['excludeScripts']:
+            scripts_to_exclude.add(script)
+
+        # Note: there must be no directories inside this folder!!
         benchmark_scripts = sorted(os.listdir(self.benchmark_dir))
-        benchmark_scripts.remove(undo_script)
+        for script in scripts_to_exclude:
+            benchmark_scripts.remove(script)
 
         undo_script = self.benchmark_dir + '/' + undo_script
         logger.info(f'Undo script is {undo_script}.')
@@ -202,7 +208,7 @@ def _benchmark_executor_factory(*args, **kwargs) -> _AbstractDBBenchmarkExecutor
 if __name__ == '__main__':
     logger.info('Running benchmark.py.')
     parser = argparse.ArgumentParser(description='Benchmark a collection of queries on a specified database platform.')
-    parser.add_argument('--benchmark', type=str, default='benchmark/asterix', help='Path to the benchmark scripts.')
+    parser.add_argument('benchmark', type=str, help='Path to the location of all benchmark scripts to execute.')
     parser.add_argument('--results', type=str, default='results', help='Path to the location of results directory.')
     parser.add_argument('--config', type=str, default='config.json', help='Path to the configuration file.')
     parser.add_argument('--database', type=str, default='asterix', choices=['asterix', 'mongo', 'couchbase'],

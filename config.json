@@ -10,7 +10,8 @@
       },
       "sshUserName": "ggalvizo",
       "allNodesInCluster": ["rutherfordium", "vanadium.ics.uci.edu"],
-      "undoScript": "undo-all-tests.1.sqlpp"
+      "undoScript": "undo-all-tests.1.sqlpp",
+      "excludeScripts": ["lower-bound-query.1.sqlpp", "lower-bound-query.2.sqlpp"]
     },
     "mongoDB": {
 
