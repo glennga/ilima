@@ -10,6 +10,7 @@ import requests
 import time
 import socket
 import uuid
+import natsort
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
         result['benchmarkGroup'] = kwargs['group_id']
         result['numberOfRuns'] = kwargs['number_of_runs']
         result['overviewFromScript'] = kwargs['overview_from_script']
+        result['configJSON'] = self.kwargs
 
         # To the results file..
         logger.debug('Recording result to disk.')
@@ -77,19 +79,25 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
         with open(group[0], 'r') as script_fp:
             group_line = script_fp.readline()
             repeat_line = script_fp.readline()
-            comment_line = script_fp.readline()
 
         group_id = group_line.split('GROUP:')[1].strip()
         number_of_runs = int(repeat_line.split('REPEAT:')[1].strip()) + 1
-        overview_from_script = comment_line.split('OVERVIEW:')[1].strip()
-
         for run_number in range(number_of_runs):
             for benchmark_script in group:
                 logger.info(f'Running {benchmark_script}, run number {run_number}.')
                 with open(benchmark_script, 'r') as script_fp:
+
+                    [script_fp.readline() for _ in range(2)]  # We do not send comments to our executor.
+                    overview_from_script = script_fp.readline().split('OVERVIEW:')[1].strip()
+
+                    # Execute the query.
                     time_issued = datetime.datetime.now()
                     query = script_fp.read()
                     result = executor(query, group_id)
+
+                    # Only save the first 100 results (for those high selectivity queries).
+                    if 'results' in result.keys():
+                        result['results'] = result['results'][:100]
                     logger.debug('Result from execution: ' + str(result))
                     self._log_result(result, **{
                         'start_time': time_issued,
@@ -140,33 +148,32 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
         super().__init__(self.results_dir, results_suffix, **kwargs)
 
     def _startup(self):
-        logger.info('Running Ansible STOP command.')
+        logger.info('Running STOP command.')
         _call_subprocess_with_logger_output(self.kwargs['benchmark']['asterixDB']['stopCommand'])
-        logger.info('Running Ansible START command.')
+        logger.info('Running START command.')
         _call_subprocess_with_logger_output(self.kwargs['benchmark']['asterixDB']['startCommand'])
         logger.info('Waiting for cluster to start...')
         time.sleep(5)
 
     def _get_benchmark_scripts(self):
-        undo_script = self.kwargs['benchmark']['asterixDB']['undoScript']
-        scripts_to_exclude = {self.kwargs['benchmark']['asterixDB']['undoScript']}
+        scripts_to_exclude = set()
         for script in self.kwargs['benchmark']['asterixDB']['excludeScripts']:
             scripts_to_exclude.add(script)
 
-        # Note: there must be no directories inside this folder!!
-        benchmark_scripts = sorted(os.listdir(self.benchmark_dir))
-        for script in scripts_to_exclude:
-            benchmark_scripts.remove(script)
+        files_from_dir = natsort.natsorted(os.listdir(self.benchmark_dir))
+        benchmark_scripts = []
+        for dir_file in files_from_dir:
+            if dir_file[-6:] == '.sqlpp' and dir_file not in scripts_to_exclude:
+                benchmark_scripts.append(dir_file)
 
-        undo_script = self.benchmark_dir + '/' + undo_script
-        logger.info(f'Undo script is {undo_script}.')
+        logger.info(f'Excluding the scripts: [f{scripts_to_exclude}]')
         benchmark_scripts = [self.benchmark_dir + '/' + b for b in benchmark_scripts]
         logger.info(f'Benchmark scripts are: [{benchmark_scripts}].')
 
-        return [undo_script, self._aggregate_by_group(benchmark_scripts)]
+        return self._aggregate_by_group(benchmark_scripts)
 
     def _execute_benchmark(self, query, group_id):
-        return requests.post(self.node_controller_uri, {
+        response = requests.post(self.node_controller_uri, {
             'statement': query,
             'client_context_id': str(group_id),
             'plan-format': 'STRING',
@@ -175,7 +182,8 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
             'logical-plan': True,
             'optimized-logical-plan': True,
             'job': True
-        }).json()
+        })
+        return response.json()
 
     def _invoke(self):
         # Delegating the process of copying our CONFIG files to a tool (external script).
@@ -183,14 +191,12 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
         _call_subprocess_with_logger_output(
             [self.kwargs['benchmark']['asterixDB']['copyConfigCommand'], self.results_dir])
 
-        undo_script, aggregated_scripts = self._get_benchmark_scripts()
+        aggregated_scripts = self._get_benchmark_scripts()
         for _, group in aggregated_scripts.items():
             self._invoke_within_group(self._execute_benchmark, group)
 
-        self._invoke_within_group(self._execute_benchmark, [undo_script])
-
     def _finalize(self):
-        logger.info('Running Ansible STOP command.')
+        logger.info('Running STOP command.')
         _call_subprocess_with_logger_output(self.kwargs['benchmark']['asterixDB']['stopCommand'])
 
 
