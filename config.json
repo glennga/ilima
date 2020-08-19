@@ -1,30 +1,28 @@
 {
   "benchmark": {
     "asterixDB": {
-      "startCommand": "tools/start-rutherfordium.sh",
-      "stopCommand": "tools/stop-rutherfordium.sh",
-      "copyConfigCommand": "tools/copy-config.sh",
+      "startCommand": "tools/no-command.sh",
+      "stopCommand": "tools/no-command.sh",
+      "copyPostCommand": "tools/copy-post.sh",
       "nodeController": {
-        "address": "rutherfordium.ics.uci.edu",
+        "address": "dbh-2074.ics.uci.edu",
         "port": 19002
       },
-      "sshUserName": "ggalvizo",
-      "allNodesInCluster": ["rutherfordium", "vanadium.ics.uci.edu"],
-      "undoScript": "undo-all-tests.1.sqlpp",
-      "excludeScripts": ["lower-bound-query.1.sqlpp", "lower-bound-query.2.sqlpp"]
+      "allNodesInCluster": [
+        "dbh-2074.ics.uci.edu"
+      ],
+      "excludeScripts": []
     },
     "mongoDB": {
-
     },
     "couchbase": {
-
     }
   },
   "analysisAsterixCluster": {
     "nodeController": {
-        "address": "ilima.kona.local",
-        "port": 19002
-      },
+      "address": "ilima.kona.local",
+      "port": 19002
+    },
     "feedSocketPort": 19050,
     "targetDataset": {
       "dataverse": "BenchmarkAnalysis",
