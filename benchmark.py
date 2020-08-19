@@ -186,14 +186,14 @@ class _AsterixDBBenchmarkExecutor(_AbstractDBBenchmarkExecutor):
         return response.json()
 
     def _invoke(self):
-        # Delegating the process of copying our CONFIG files to a tool (external script).
-        logger.info('Running copy command for config files.')
-        _call_subprocess_with_logger_output(
-            [self.kwargs['benchmark']['asterixDB']['copyConfigCommand'], self.results_dir])
-
         aggregated_scripts = self._get_benchmark_scripts()
         for _, group in aggregated_scripts.items():
             self._invoke_within_group(self._execute_benchmark, group)
+
+        # Delegating the process of copying our config files + logs to a tool (external script).
+        logger.info('Running copy-post command for copying config + log files.')
+        _call_subprocess_with_logger_output(
+            [self.kwargs['benchmark']['asterixDB']['copyPostCommand'], self.results_dir])
 
     def _finalize(self):
         logger.info('Running STOP command.')
