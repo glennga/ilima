@@ -104,7 +104,7 @@ class _AbstractDBBenchmarkExecutor(abc.ABC):
                         'group_id': group_id,
                         'number_of_runs': number_of_runs,
                         'overview_from_script': overview_from_script,
-                        'query_executed': query
+                        'query_executed': query[:1000]
                     })
                 time.sleep(1)
 
@@ -234,3 +234,4 @@ if __name__ == '__main__':
         logger.error('Uncaught exception! ' + str(uncaught_exception))
 
     logger.info('Exiting benchmark.py.')
+    os.system('say "benchmark.py has finished running."')
