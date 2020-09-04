@@ -1,0 +1,20 @@
+-- Note: this is meant to be run DIRECTLY on the analysis CC node. --
+DROP DATAVERSE BenchmarkAnalysis IF EXISTS;
+CREATE DATAVERSE BenchmarkAnalysis;
+USE BenchmarkAnalysis;
+
+CREATE TYPE GenericTypeSelfGeneratedKey AS {
+    id: string
+};
+CREATE DATASET ResultsDataset (GenericTypeSelfGeneratedKey) PRIMARY KEY id;
+
+CREATE FEED ResultsSocketFeed WITH {
+    "adapter-name": "socket_adapter",
+    "sockets": "localhost:19050",
+    "address-type": "IP",
+    "type-name": "GenericTypeSelfGeneratedKey",
+    "format": "adm"
+};
+
+CONNECT FEED ResultsSocketFeed TO DATASET ResultsDataset;
+START FEED ResultsSocketFeed;
