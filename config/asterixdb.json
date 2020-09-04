@@ -1,0 +1,25 @@
+{
+  "benchmark": {
+    "startCommand": "tools/asterixdb/start_command.sh",
+    "stopCommand": "tools/asterixdb/stop_command.sh",
+    "postCommand": "tools/asterixdb/post_command.sh",
+    "nodeController": {
+      "address": "dbh-2074.ics.uci.edu",
+      "port": 19002
+    },
+    "allNodesInCluster": [
+      "dbh-2074.ics.uci.edu"
+    ]
+  },
+  "analysisCluster": {
+    "nodeController": {
+      "address": "ilima.kona.local",
+      "port": 19002
+    },
+    "feedSocketPort": 19050,
+    "targetDataset": {
+      "dataverse": "BenchmarkAnalysis",
+      "dataset": "ResultsDataset"
+    }
+  }
+}

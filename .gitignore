@@ -1,6 +1,11 @@
-results/*
-ilima-petal/*
 .idea/*
 venv/*
-tools/*
-ilima.log
+old/*
+out/*
+
+# Tools that are specific to my system.
+/tools/asterixdb/
+/tools/asterixdb/post_command.sh
+/tools/asterixdb/start_command.sh
+/tools/asterixdb/stop_command.sh
+/tools/download_results.sh

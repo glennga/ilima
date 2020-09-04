@@ -16,7 +16,7 @@
     },
     "fileHandler": {
       "class": "logging.FileHandler",
-      "filename": "ilima.log",
+      "filename": "out/ilima.log",
       "formatter": "default",
       "level": "DEBUG"
     }
