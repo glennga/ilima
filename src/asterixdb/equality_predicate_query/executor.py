@@ -26,33 +26,6 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
             for line in f:
                 self.sample_sarr_data.append(json.loads(line))
 
-    def _do_indexes_exist(self):
-        logger.info(f'Checking that the index "{self.index_name}" exists on ATOM.')
-        results = self.execute_sqlpp(f"""
-            SELECT *
-            FROM `Metadata`.`Index`
-            WHERE IndexName = "{self.index_name}" AND 
-                  DataverseName = "ShopALot.ATOM" AND 
-                  DatasetName = "{self.dataset_name}";
-        """)
-        if len(results['results']) == 0:
-            logger.error(f'Index "{self.index_name}" on ATOM does not exist.')
-            return False
-
-        logger.info(f'Checking that the index "{self.index_name}" exists on SARR.')
-        results = self.execute_sqlpp(f"""
-            SELECT *
-            FROM `Metadata`.`Index`
-            WHERE IndexName = "{self.index_name}" AND 
-                  DataverseName = "ShopALot.SARR" AND 
-                  DatasetName = "{self.dataset_name}";
-        """)
-        if len(results['results']) == 0:
-            logger.error(f'Index "{self.index_name}" on SARR does not exist.')
-            return False
-
-        return True
-
     def _enable_index_only(self, is_index_only):
         if is_index_only:
             results = self.execute_sqlpp(""" SET `compiler.indexonly` "true"; """)
@@ -74,7 +47,7 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
         pass
 
     def perform_benchmark(self):
-        if not self._do_indexes_exist():
+        if not self.do_indexes_exist(self.index_name, self.dataset_name):
             return
 
         logger.info(f'Executing equality_predicate_query on {self.dataset_name} for ATOM.')

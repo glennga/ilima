@@ -64,6 +64,33 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self.results_socket.connect((self.config['analysisCluster']['nodeController']['address'],
                                      self.config['analysisCluster']['feedSocketPort']))
 
+    def do_indexes_exist(self, index_name, dataset_name):
+        logger.info(f'Checking that the index "{index_name}" exists on ATOM.')
+        results = self.execute_sqlpp(f"""
+            SELECT *
+            FROM `Metadata`.`Index`
+            WHERE IndexName = "{index_name}" AND 
+                  DataverseName = "ShopALot.ATOM" AND 
+                  DatasetName = "{dataset_name}";
+        """)
+        if len(results['results']) == 0:
+            logger.error(f'Index "{index_name}" on ATOM does not exist.')
+            return False
+
+        logger.info(f'Checking that the index "{index_name}" exists on SARR.')
+        results = self.execute_sqlpp(f"""
+            SELECT *
+            FROM `Metadata`.`Index`
+            WHERE IndexName = "{index_name}" AND 
+                  DataverseName = "ShopALot.SARR" AND 
+                  DatasetName = "{dataset_name}";
+        """)
+        if len(results['results']) == 0:
+            logger.error(f'Index "{index_name}" on SARR does not exist.')
+            return False
+
+        return True
+
     def log_results(self, results):
         results['logTime'] = str(datetime.datetime.now())
         results['executionID'] = self.execution_id
