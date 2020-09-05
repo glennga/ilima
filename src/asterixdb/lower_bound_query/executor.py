@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class LowerBoundQuery(AbstractBenchmarkRunnable):
+    NUMBER_OF_REPEATS = 1000
+
     def perform_benchmark(self):
         logger.info('Issuing DDL for lower_bound_query.')
         results = self.execute_sqlpp("""
@@ -26,7 +28,7 @@ class LowerBoundQuery(AbstractBenchmarkRunnable):
         self.log_results(results)
 
         logger.info('Now executing the lower_bound_query.')
-        for i in range(1000):
+        for i in range(self.NUMBER_OF_REPEATS):
             logger.debug(f'Executing run {i + 1} for lower_bound_query.')
             results = self.execute_sqlpp("""
                 SELECT *
