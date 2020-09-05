@@ -10,13 +10,13 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
     def __init__(self):
         super().__init__(index_name='usersNumberIdx', dataset_name='Users')
 
-    def _benchmark_atom(self, working_sample_objects, atom_num):
+    def benchmark_atom(self, working_sample_objects, atom_num):
         if not self._enable_index_only(atom_num == 1):
             return False
 
         for i, sample_user in enumerate(working_sample_objects):
             sample_user_number = sample_user['phone']['number']
-            results = self._execute_sqlpp(f"""
+            results = self.execute_sqlpp(f"""
                  SELECT U
                  FROM ShopALot.ATOM.Users U
                  WHERE U.phone.number = "{sample_user_number}";
@@ -27,35 +27,35 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
             logger.debug(f'Query {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
             results['runNumber'] = i + 1
-            self._log_results(results)
+            self.log_results(results)
 
         return True
 
-    def _benchmark_sarr(self, working_sample_objects, sarr_num):
+    def benchmark_sarr(self, working_sample_objects, sarr_num):
         for i, sample_user in enumerate(working_sample_objects):
             sample_user_number = sample_user['phones'][0]['number']
             if sarr_num == 1:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT U
                     FROM ShopALot.SARR.Users U
                     UNNEST U.phones UP
                     WHERE UP.number = "{sample_user_number}";
                 """)
             elif sarr_num == 2:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT DISTINCT U
                     FROM ShopALot.SARR.Users U
                     UNNEST U.phones UP
                     WHERE UP.number = "{sample_user_number}";
                 """)
             elif sarr_num == 3:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT U
                     FROM ShopALot.SARR.Users U
                     WHERE (SOME UP IN U.phones SATISFIES UP.number = "{sample_user_number}");
                 """)
             else:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT U
                     FROM ShopALot.SARR.Users U
                     WHERE LEN(U.phones) > 0 AND 
@@ -68,7 +68,7 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
             logger.debug(f'Query {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
             results['runNumber'] = i + 1
-            self._log_results(results)
+            self.log_results(results)
 
         return True
 

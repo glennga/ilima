@@ -64,7 +64,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self.results_socket.connect((self.config['analysisCluster']['nodeController']['address'],
                                      self.config['analysisCluster']['feedSocketPort']))
 
-    def _log_results(self, results):
+    def log_results(self, results):
         results['logTime'] = str(datetime.datetime.now())
         results['executionID'] = self.execution_id
         results['configJSON'] = self.config
@@ -82,7 +82,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
         else:
             logger.info('Result successfully sent to cluster.')
 
-    def _execute_sqlpp(self, statement):
+    def execute_sqlpp(self, statement):
         response = requests.post(self.nc_uri, {
             'statement': statement,
             'client_context_id': str(uuid.uuid4()),
@@ -102,11 +102,11 @@ class AbstractBenchmarkRunnable(abc.ABC):
         return response_json
 
     @abc.abstractmethod
-    def _perform_benchmark(self):
+    def perform_benchmark(self):
         pass
 
     @abc.abstractmethod
-    def _perform_post(self):
+    def perform_post(self):
         pass
 
     def __call__(self, *args, **kwargs):
@@ -134,14 +134,14 @@ class AbstractBenchmarkRunnable(abc.ABC):
 
         # Perform the benchmark.
         logger.debug('Executing the benchmark.')
-        self._perform_benchmark()
+        self.perform_benchmark()
 
         # Populate our results directory.
         logger.info('Running finalize command for copying config + log files.')
         [h.flush() for h in logger.handlers]
         self._call_subprocess([self.config['benchmark']['postCommand'], self.results_dir])
 
-        self._perform_post()
+        self.perform_post()
         self.results_fp.close()
         self.results_socket.close()
         logger.info('Benchmark has finished executing.')

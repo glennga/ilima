@@ -28,7 +28,7 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
 
     def _do_indexes_exist(self):
         logger.info(f'Checking that the index "{self.index_name}" exists on ATOM.')
-        results = self._execute_sqlpp(f"""
+        results = self.execute_sqlpp(f"""
             SELECT *
             FROM `Metadata`.`Index`
             WHERE IndexName = "{self.index_name}" AND 
@@ -40,7 +40,7 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
             return False
 
         logger.info(f'Checking that the index "{self.index_name}" exists on SARR.')
-        results = self._execute_sqlpp(f"""
+        results = self.execute_sqlpp(f"""
             SELECT *
             FROM `Metadata`.`Index`
             WHERE IndexName = "{self.index_name}" AND 
@@ -55,9 +55,9 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
 
     def _enable_index_only(self, is_index_only):
         if is_index_only:
-            results = self._execute_sqlpp(""" SET `compiler.indexonly` "true"; """)
+            results = self.execute_sqlpp(""" SET `compiler.indexonly` "true"; """)
         else:
-            results = self._execute_sqlpp(""" SET `compiler.indexonly` "false"; """)
+            results = self.execute_sqlpp(""" SET `compiler.indexonly` "false"; """)
 
         if results['status'] != 'success':
             logger.error("Could not set indexonly parameter.")
@@ -66,54 +66,54 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
             return True
 
     @abc.abstractmethod
-    def _benchmark_atom(self, working_sample_objects, atom_num):
+    def benchmark_atom(self, working_sample_objects, atom_num):
         pass
 
     @abc.abstractmethod
-    def _benchmark_sarr(self, working_sample_objects, sarr_num):
+    def benchmark_sarr(self, working_sample_objects, sarr_num):
         pass
 
-    def _perform_benchmark(self):
+    def perform_benchmark(self):
         if not self._do_indexes_exist():
             return
 
         logger.info(f'Executing equality_predicate_query on {self.dataset_name} for ATOM.')
         logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {self.index_name}, not index-only.')
         working_sample_objects = self.sample_atom_data[:int(len(self.sample_atom_data) / 2)]
-        if not self._benchmark_atom(working_sample_objects, atom_num=1):
+        if not self.benchmark_atom(working_sample_objects, atom_num=1):
             return
 
         logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {self.index_name}, index-only.')
         working_sample_objects = self.sample_atom_data[-int(len(self.sample_atom_data) / 2):]
-        if not self._benchmark_atom(working_sample_objects, atom_num=2):
+        if not self.benchmark_atom(working_sample_objects, atom_num=2):
             return
 
         logger.info(f'Executing equality_predicate_query on {self.dataset_name} for SARR.')
         logger.info(f'Running benchmark for SARR, {self.dataset_name}, {self.index_name}, '
                     f'unnest-style query, no materialization.')
         working_sample_objects = self.sample_sarr_data[:int(len(self.sample_sarr_data) / 4)]
-        if not self._benchmark_sarr(working_sample_objects, sarr_num=1):
+        if not self.benchmark_sarr(working_sample_objects, sarr_num=1):
             return
 
         logger.info(f'Running benchmark for SARR, {self.dataset_name}, {self.index_name}, '
                     f'unnest-style query, with materialization.')
         working_sample_objects = self.sample_sarr_data[int(len(self.sample_sarr_data) / 4):
                                                        int(len(self.sample_sarr_data) / 2)]
-        if not self._benchmark_sarr(working_sample_objects, sarr_num=2):
+        if not self.benchmark_sarr(working_sample_objects, sarr_num=2):
             return
 
         logger.info(f'Running benchmark for SARR, {self.dataset_name}, {self.index_name}, '
                     f'existential quantification query.')
         working_sample_objects = self.sample_sarr_data[int(len(self.sample_sarr_data) / 2):
                                                        int(3 * len(self.sample_sarr_data) / 4)]
-        if not self._benchmark_sarr(working_sample_objects, sarr_num=3):
+        if not self.benchmark_sarr(working_sample_objects, sarr_num=3):
             return
 
         logger.info(f'Running benchmark for SARR, {self.dataset_name}, {self.index_name}, '
                     f'universal quantification query.')
         working_sample_objects = self.sample_sarr_data[-int(len(self.sample_sarr_data) / 4):]
-        if not self._benchmark_sarr(working_sample_objects, sarr_num=4):
+        if not self.benchmark_sarr(working_sample_objects, sarr_num=4):
             return
 
-    def _perform_post(self):
+    def perform_post(self):
         pass

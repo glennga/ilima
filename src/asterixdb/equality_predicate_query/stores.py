@@ -10,13 +10,13 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
     def __init__(self):
         super().__init__(index_name='storesCatIdx', dataset_name='Stores')
 
-    def _benchmark_atom(self, working_sample_objects, atom_num):
+    def benchmark_atom(self, working_sample_objects, atom_num):
         if not self._enable_index_only(atom_num == 1):
             return False
 
         for i, sample_store in enumerate(working_sample_objects):
             sample_category = sample_store['category']
-            results = self._execute_sqlpp(f"""
+            results = self.execute_sqlpp(f"""
                  SELECT S
                  FROM ShopALot.ATOM.Stores S
                  WHERE S.category = "{sample_category}";
@@ -29,35 +29,35 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             results['results'] = results['results'][:10]  # This is high-selectivity query, do not save all results.
             results['areResultsTruncated'] = True
             results['runNumber'] = i + 1
-            self._log_results(results)
+            self.log_results(results)
 
         return True
 
-    def _benchmark_sarr(self, working_sample_objects, sarr_num):
+    def benchmark_sarr(self, working_sample_objects, sarr_num):
         for i, sample_store in enumerate(working_sample_objects):
             sample_category = sample_store['category'][0]
             if sarr_num == 1:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT S
                     FROM ShopALot.SARR.Stores S
                     UNNEST S.categories SC 
                     WHERE SC = "{sample_category}";
                 """)
             elif sarr_num == 2:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT DISTINCT S
                     FROM ShopALot.SARR.Stores S
                     UNNEST S.categories SC 
                     WHERE SC = "{sample_category}";
                 """)
             elif sarr_num == 3:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT S
                     FROM ShopALot.SARR.Stores S
                     "{sample_category}" IN S.categories;
                 """)
             else:
-                results = self._execute_sqlpp(f"""
+                results = self.execute_sqlpp(f"""
                     SELECT S
                     FROM ShopALot.SARR.Stores S
                     WHERE LEN(S.categories) > 0 AND
@@ -72,7 +72,7 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             results['results'] = results['results'][:10]  # This is high-selectivity query, do not save all results.
             results['areResultsTruncated'] = True
             results['runNumber'] = i + 1
-            self._log_results(results)
+            self.log_results(results)
 
         return True
 

@@ -13,7 +13,7 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
         super().__init__()
 
     def _benchmark_load_sarr(self):
-        results = self._execute_sqlpp("""
+        results = self.execute_sqlpp("""
             DROP DATAVERSE ShopALot.SARR IF EXISTS;
             CREATE DATAVERSE ShopALot.SARR;
             USE ShopALot.SARR;
@@ -38,10 +38,10 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
 
             CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number);
         """ % self.sarr_json)
-        self._log_results(results)
+        self.log_results(results)
 
     def _benchmark_load_atom(self):
-        results = self._execute_sqlpp("""
+        results = self.execute_sqlpp("""
             DROP DATAVERSE ShopALot.ATOM IF EXISTS;
             CREATE DATAVERSE ShopALot.ATOM;
             USE ShopALot.ATOM;
@@ -66,16 +66,16 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
 
             CREATE INDEX usersNumberIdx ON Users (phone.number);
         """ % self.atom_json)
-        self._log_results(results)
+        self.log_results(results)
 
-    def _perform_benchmark(self):
+    def perform_benchmark(self):
         logger.info('Executing load_indexed_dataverse on Users for SARR.')
         self._benchmark_load_sarr()
 
         logger.info('Executing load_indexed_dataverse on Users for ATOM.')
         self._benchmark_load_atom()
 
-    def _perform_post(self):
+    def perform_post(self):
         pass
 
 
