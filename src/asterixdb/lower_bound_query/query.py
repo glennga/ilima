@@ -7,7 +7,7 @@ from src.asterixdb.executor import AbstractBenchmarkRunnable
 logger = logging.getLogger(__name__)
 
 
-class LowerBoundQueryBenchmarkRunnable(AbstractBenchmarkRunnable):
+class LowerBoundQuery(AbstractBenchmarkRunnable):
     def _perform_benchmark(self):
         logger.info('Issuing DDL for lower_bound_query.')
         results = self._execute_sqlpp("""
@@ -43,4 +43,4 @@ class LowerBoundQueryBenchmarkRunnable(AbstractBenchmarkRunnable):
 
 
 if __name__ == '__main__':
-    LowerBoundQueryBenchmarkRunnable()
+    LowerBoundQuery()

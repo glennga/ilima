@@ -6,7 +6,7 @@ from src.asterixdb.executor import AbstractBenchmarkRunnable
 logger = logging.getLogger(__name__)
 
 
-class LoadIndexedStoresDataverseRunnable(AbstractBenchmarkRunnable):
+class LoadIndexedStoresDataverse(AbstractBenchmarkRunnable):
     def __init__(self):
         self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-StoresFull.json"
         self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-StoresFull.json"
@@ -102,4 +102,4 @@ class LoadIndexedStoresDataverseRunnable(AbstractBenchmarkRunnable):
 
 
 if __name__ == '__main__':
-    LoadIndexedStoresDataverseRunnable()
+    LoadIndexedStoresDataverse()

@@ -3,11 +3,10 @@ import logging
 
 from src.asterixdb.executor import AbstractBenchmarkRunnable
 
-
 logger = logging.getLogger(__name__)
 
 
-class LoadIndexedUsersDataverseRunnable(AbstractBenchmarkRunnable):
+class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
     def __init__(self):
         self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-UsersFull.json"
         self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-UsersFull.json"
@@ -81,4 +80,4 @@ class LoadIndexedUsersDataverseRunnable(AbstractBenchmarkRunnable):
 
 
 if __name__ == '__main__':
-    LoadIndexedUsersDataverseRunnable()
+    LoadIndexedUsersDataverse()
