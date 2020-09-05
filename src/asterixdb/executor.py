@@ -28,14 +28,6 @@ class AbstractBenchmarkRunnable(abc.ABC):
         return config_json
 
     @staticmethod
-    def _generate_results_dir():
-        results_dir = 'out' + '/' + datetime.datetime.now().strftime('A-%Y-%m-%d_%H-%M-%S')
-        os.mkdir(os.getcwd() + '/' + results_dir)
-        logger.info(f'Results will be stored in: {results_dir}')
-
-        return results_dir
-
-    @staticmethod
     def _call_subprocess(command):
         subprocess_pipe = subprocess.Popen(
             command,
@@ -47,6 +39,13 @@ class AbstractBenchmarkRunnable(abc.ABC):
             if stdout_line.strip() != '':
                 logger.debug(stdout_line.strip())
         subprocess_pipe.stdout.close()
+
+    def _generate_results_dir(self):
+        results_dir = 'out/A-' + self.__class__.__name__ + datetime.datetime.now().strftime('-%Y-%m-%d_%H-%M-%S')
+        os.mkdir(os.getcwd() + '/' + results_dir)
+        logger.info(f'Results will be stored in: {results_dir}')
+
+        return results_dir
 
     def __init__(self):
         self.config = self._collect_config()
@@ -118,7 +117,8 @@ class AbstractBenchmarkRunnable(abc.ABC):
             'rewritten-expression-tree': True,
             'logical-plan': True,
             'optimized-logical-plan': True,
-            'job': True
+            'job': True,
+            'profile': 'timings'
         })
 
         response_json = response.json()
@@ -173,4 +173,6 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self.results_fp.close()
         self.results_socket.close()
         logger.info('Benchmark has finished executing.')
+
+        # Scare me in the middle of the night :-)
         os.system('say "Benchmark has finished executing."')
