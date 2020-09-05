@@ -155,6 +155,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
                 else:
                     logger.info(f'Status from initial connection to cluster not success, '
                                 f'but {starting_response_json["status"]}. Trying again in 2 seconds...')
+                    logger.info(f'JSON dump: {starting_response_json}')
 
             except requests.exceptions.ConnectionError:
                 logger.info('Connection refused, trying again in 2 seconds...')

@@ -74,4 +74,4 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
 
 if __init__ == '__main__':
-    UsersEqualityPredicateQuery()
+    UsersEqualityPredicateQuery()()

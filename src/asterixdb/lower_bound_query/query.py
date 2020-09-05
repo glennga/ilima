@@ -43,4 +43,4 @@ class LowerBoundQuery(AbstractBenchmarkRunnable):
 
 
 if __name__ == '__main__':
-    LowerBoundQuery()
+    LowerBoundQuery()()

@@ -83,4 +83,4 @@ class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
 
 
 if __name__ == '__main__':
-    LoadIndexedStoresDataset()
+    LoadIndexedStoresDataset()()

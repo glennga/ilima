@@ -83,4 +83,4 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
 
 if __name__ == '__main__':
-    LoadIndexedUsersDataset()
+    LoadIndexedUsersDataset()()

@@ -20,4 +20,4 @@ class UsersInsertUpsertDelete(AbstractInsertUpsertDelete):
 
 
 if __name__ == '__main__':
-    UsersInsertUpsertDelete()
+    UsersInsertUpsertDelete()()

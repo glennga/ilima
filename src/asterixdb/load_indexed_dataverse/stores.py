@@ -102,4 +102,4 @@ class LoadIndexedStoresDataverse(AbstractBenchmarkRunnable):
 
 
 if __name__ == '__main__':
-    LoadIndexedStoresDataverse()
+    LoadIndexedStoresDataverse()()

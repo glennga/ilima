@@ -78,4 +78,4 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
 
 if __init__ == '__main__':
-    StoresEqualityPredicateQuery()
+    StoresEqualityPredicateQuery()()
