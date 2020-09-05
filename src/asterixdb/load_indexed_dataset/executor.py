@@ -39,7 +39,8 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
         self.log_results(results)
 
         for i in range(self.NUMBER_OF_REPEATS):
-            self.benchmark_sarr(i)
+            if not self.benchmark_sarr(i):
+                return
 
         logger.info('Executing load_indexed_dataset on Users for ATOM.')
         logger.info('Starting Algebricks-layer bulk loading for ATOM.')
@@ -56,7 +57,8 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
         self.log_results(results)
 
         for i in range(self.NUMBER_OF_REPEATS):
-            self.benchmark_atom(i)
+            if not self.benchmark_atom(i):
+                return
 
     def perform_post(self):
         pass
