@@ -1,7 +1,8 @@
-.idea/*
-venv/*
-old/*
-out/*
+/.idea/*
+/venv/*
+/old/*
+/out/*
+/resources/*
 
 # Tools that are specific to my system.
 /tools/asterixdb/
