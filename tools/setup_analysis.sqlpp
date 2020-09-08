@@ -7,10 +7,11 @@ CREATE TYPE GenericTypeSelfGeneratedKey AS {
     id: string
 };
 CREATE DATASET ResultsDataset (GenericTypeSelfGeneratedKey) PRIMARY KEY id;
+CREATE INDEX executionIDIdx ON ResultsDataset (executionID : string ?);
 
 CREATE FEED ResultsSocketFeed WITH {
     "adapter-name": "socket_adapter",
-    "sockets": "localhost:19050",
+    "sockets": "ilima.kona.local:19050",
     "address-type": "IP",
     "type-name": "GenericTypeSelfGeneratedKey",
     "format": "adm"
