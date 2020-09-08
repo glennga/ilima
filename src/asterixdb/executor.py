@@ -47,8 +47,10 @@ class AbstractBenchmarkRunnable(abc.ABC):
 
         return results_dir
 
-    def __init__(self):
-        self.config = self._collect_config()
+    def __init__(self, **kwargs):
+        self.config = {**self._collect_config(), **kwargs}
+        if 'is_profile' not in self.config.keys():
+            self.config['is_profile'] = True
         logger.info(f'Using the following configuration: {self.config}')
 
         self.nc_uri = self.config['benchmark']['nodeController']['address'] + ':' + \
@@ -109,7 +111,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
             logger.info('Result successfully sent to cluster.')
 
     def execute_sqlpp(self, statement):
-        response = requests.post(self.nc_uri, {
+        query_parameters = {
             'statement': statement,
             'client_context_id': str(uuid.uuid4()),
             'plan-format': 'STRING',
@@ -119,9 +121,11 @@ class AbstractBenchmarkRunnable(abc.ABC):
             'optimized-logical-plan': True,
             'job': True,
             'profile': 'timings'
-        })
+        }
+        if not self.config['is_profile']:
+            del query_parameters['profile']
 
-        response_json = response.json()
+        response_json = requests.post(self.nc_uri, query_parameters).json()
         if response_json['status'] != 'success':
             logger.warning(f'Status of executing statement {statement} not successful, '
                            f'but instead {response_json["status"]}.')
@@ -137,6 +141,8 @@ class AbstractBenchmarkRunnable(abc.ABC):
         pass
 
     def __call__(self, *args, **kwargs):
+        logger.info(f'Working with execution id: {self.execution_id}.')
+
         # Restart the cluster. For queries, this minimizes the chance that we access a cached page.
         logger.info('Running STOP command.')
         self._call_subprocess(self.config['benchmark']['stopCommand'])
