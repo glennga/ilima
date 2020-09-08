@@ -61,4 +61,12 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
                 return
 
     def perform_post(self):
-        pass
+        logger.info('Dropping the SARR and ATOM dataverses.')
+        results = self.execute_sqlpp("""
+            DROP DATAVERSE ShopALot.ATOM;
+            DROP DATAVERSE ShopALot.SARR;
+        """)
+        if results['status'] != 'success':
+            logger.error(f'Result of ATOM + SARR dataverse deletion was not success, but {results["status"]}.')
+            return
+        self.log_results(results)

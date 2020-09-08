@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-StoresHalf.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-StoresHalf.json"
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-StoresEighth.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-StoresEighth.json"
         super().__init__(**{
             'sarr_type_ddl': """
                 CREATE TYPE StoresType AS {
