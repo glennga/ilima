@@ -42,6 +42,7 @@ class LowerBoundQuery(AbstractBenchmarkRunnable):
         results = self.execute_sqlpp(""" DROP DATAVERSE ForLowerBoundQuery; """)
         if results['status'] != 'success':
             logger.warning('Could not remove test dataverse.')
+            logger.warning(f'JSON Dump: {results}')
 
 
 if __name__ == '__main__':
