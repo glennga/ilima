@@ -77,5 +77,5 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
         return True
 
 
-if __init__ == '__main__':
+if __name__ == '__main__':
     StoresEqualityPredicateQuery()()
