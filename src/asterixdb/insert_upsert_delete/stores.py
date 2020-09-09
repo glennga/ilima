@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class StoresInsertUpsertDelete(AbstractInsertUpsertDelete):
     def __init__(self):
-        super().__init__(index_name='storesCatIdx', dataset_name='Stores', primary_key='store_id')
+        super().__init__(index_names=['storesCatIdx'], dataset_name='Stores', primary_key='store_id')
 
     def generate_atom_dataset(self, insert_handler, starting_id, ending_id):
         return atom_generate_stores(insert_handler, self.faker_dategen, starting_id, ending_id)

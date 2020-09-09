@@ -5,6 +5,7 @@ import random
 import string
 import faker
 import abc
+import re
 
 from src.asterixdb.executor import AbstractBenchmarkRunnable
 
@@ -17,7 +18,7 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
     INSERT_CHUNK_SIZE = 1000
 
     def __init__(self, **kwargs):
-        self.index_name = kwargs['index_name']
+        self.index_names = kwargs['index_names']
         self.dataset_name = kwargs['dataset_name']
         self.primary_key = kwargs['primary_key']
         self.faker_dategen = faker.Faker()
@@ -122,7 +123,7 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         return True
 
     def perform_benchmark(self):
-        if not self.do_indexes_exist(self.index_name, self.dataset_name):
+        if not self.do_indexes_exist(self.index_names, self.dataset_name):
             return
 
         logger.info(f'Executing insert_upsert_delete on {self.dataset_name} for ATOM.')

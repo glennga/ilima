@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
     def __init__(self):
-        super().__init__(index_name='usersNumberIdx', dataset_name='Users')
+        super().__init__(index_names=['usersNumberIdx'], dataset_name='Users')
 
     def benchmark_atom(self, working_sample_objects, atom_num):
         if not self._enable_index_only(atom_num == 1):
