@@ -13,8 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
+    # Constants pertaining to the rate + total time of ingestion.
     TOTAL_DATASET_SIZE = 160000000
-    TARGET_INSERT_SIZE = TOTAL_DATASET_SIZE / 100
+    TARGET_INSERT_SIZE = int(TOTAL_DATASET_SIZE * 0.01)
     INSERT_CHUNK_SIZE = 1000
 
     def __init__(self, **kwargs):
@@ -33,6 +34,32 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
     def generate_sarr_dataset(self, insert_handler, starting_id, ending_id):
         pass
 
+    def _perform_insert_upsert(self, i, dataverse, operation, text):
+        results = self.execute_sqlpp(f"""
+            {operation.upper()} INTO ShopALot.{dataverse.upper()}.{self.dataset_name} [{text}];               
+        """)
+        if results['status'] != 'success':
+            logger.error(f'{operation.capitalize()} {i + 1} was not successful.')
+            return False
+
+        logger.debug(f'{operation.capitalize()} {i + 1} was successful. '
+                     f'Execution time: {results["metrics"]["elapsedTime"]}')
+
+        # This Remove the expression trees, and reduce the size of our results.
+        results['plans'] = {
+            'logicalPlan': re.sub(
+                'ordered-list-constructor\({.*?}\)', 'ordered-list-constructor({...})',
+                results['plans']['logicalPlan']
+            ),
+            'optimizedLogicalPlan': re.sub(
+                'ordered-list-constructor\({.*}\)', 'ordered-list-constructor({...})',
+                results['plans']['optimizedLogicalPlan']
+            )
+        }
+        results['runNumber'] = i + 1
+        self.log_results(results)
+        return True
+
     def _benchmark_insert(self, dataverse):
         for i in range(int(self.TARGET_INSERT_SIZE / self.INSERT_CHUNK_SIZE)):
             proposed_k = ''.join(random.choice(string.ascii_uppercase) for _ in range(20))
@@ -44,25 +71,18 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
 
             def _insert_handler(out_json):
                 out_json['chunk_id'] = proposed_k
-                self.chunks[proposed_k].add(out_json[self.primary_key])
+                self.chunks[proposed_k].add(out_json[self.primary_key])  # Save memory by not storing the prefix.
+                out_json[self.primary_key] = out_json['chunk_id'] + out_json[self.primary_key]
                 insert_chunk.append(json.dumps(out_json))
 
             if dataverse == 'atom':
                 self.generate_atom_dataset(_insert_handler, 0, self.INSERT_CHUNK_SIZE)
             else:
                 self.generate_sarr_dataset(_insert_handler, 0, self.INSERT_CHUNK_SIZE)
-            insert_text = ',\n'.join(insert_chunk)
 
-            results = self.execute_sqlpp(f"""
-                INSERT INTO ShopALot.{dataverse.upper()}.{self.dataset_name} [{insert_text}];               
-            """)
-            if results['status'] != 'success':
-                logger.error(f'Insert {i + 1} was not successful.')
+            # Perform the insert itself.
+            if not self._perform_insert_upsert(i, dataverse, 'insert', ',\n'.join(insert_chunk)):
                 return False
-
-            logger.debug(f'Insert {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
-            results['runNumber'] = i + 1
-            self.log_results(results)
 
         return True
 
@@ -74,25 +94,17 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
 
             def _upsert_handler(out_json):
                 out_json['chunk_id'] = chunk_key
-                out_json[self.primary_key] = next(chunk_iterator)
+                out_json[self.primary_key] = out_json['chunk_id'] + next(chunk_iterator)
                 upsert_chunk.append(json.dumps(out_json))
 
             if dataverse == 'atom':
                 self.generate_atom_dataset(_upsert_handler, 0, self.INSERT_CHUNK_SIZE)
             else:
                 self.generate_sarr_dataset(_upsert_handler, 0, self.INSERT_CHUNK_SIZE)
-            upsert_text = ',\n'.join(upsert_chunk)
 
-            results = self.execute_sqlpp(f"""
-                UPSERT INTO ShopALot.{dataverse.upper()}.{self.dataset_name} [{upsert_text}];               
-            """)
-            if results['status'] != 'success':
-                logger.error(f'Upsert {i + 1} was not successful.')
+            # Perform the upsert itself.
+            if not self._perform_insert_upsert(i, dataverse, 'upsert', ',\n'.join(upsert_chunk)):
                 return False
-
-            logger.debug(f'Upsert {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
-            results['runNumber'] = i + 1
-            self.log_results(results)
 
         return True
 
@@ -153,4 +165,13 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
             return
 
     def perform_post(self):
-        pass
+        logger.info('Removing the index on chunk_id for both ATOM and SARR.')
+        results = self.execute_sqlpp(f"""
+            USE ShopALot.ATOM;
+            DROP INDEX {self.dataset_name}.{self.dataset_name.lower()}ChunkIdx;
+            USE ShopALot.SARR;
+            DROP INDEX {self.dataset_name}.{self.dataset_name.lower()}ChunkIdx;
+        """)
+        if results['status'] != 'success':
+            logger.warning('Could not drop the index on chunk_id.')
+            logger.warning(f'JSON Dump: {results}')
