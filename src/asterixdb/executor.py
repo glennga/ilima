@@ -19,12 +19,12 @@ class AbstractBenchmarkRunnable(abc.ABC):
     def _collect_config():
         parser = argparse.ArgumentParser(description='Benchmark a collection of queries on an AsterixDB instance.')
         parser.add_argument('--config', type=str, default='config/asterixdb.json', help='Path to the config file.')
-        parser.add_argument('--resources', type=str, default='resources', help='Path to the resources folder.')
+        parser.add_argument('--shopalot', type=str, default='config/shopalot.json', help='Path to the datagen file.')
         parser_args = parser.parse_args()
         with open(parser_args.config) as config_file:
             config_json = json.load(config_file)
 
-        config_json['resources'] = parser_args.resources
+        config_json['shopalot'] = parser_args.shopalot
         return config_json
 
     @staticmethod
