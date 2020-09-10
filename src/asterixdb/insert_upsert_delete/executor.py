@@ -1,10 +1,8 @@
 import __init__
 import logging
 import json
-import random
-import string
-import faker
 import abc
+import random
 import re
 
 from src.asterixdb.executor import AbstractBenchmarkRunnable
@@ -13,26 +11,47 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
-    # Constants pertaining to the rate + total time of ingestion.
-    TOTAL_DATASET_SIZE = 160000000
-    TARGET_INSERT_SIZE = int(TOTAL_DATASET_SIZE * 0.01)
-    INSERT_CHUNK_SIZE = 1000
+    DATASET_INCREMENT_SIZE = 0.01
+    DATASET_DECREMENT_SIZE = 0.05
 
     def __init__(self, **kwargs):
         self.index_names = kwargs['index_names']
         self.dataset_name = kwargs['dataset_name']
         self.primary_key = kwargs['primary_key']
-        self.faker_dategen = faker.Faker()
-        self.chunks = dict()
+        self.dataset_size = kwargs['dataset_size']
+        self.chunk_size = kwargs['chunk_size']
+
+        self.insert_epoch = kwargs['insert_epoch']
+        self.upsert_epoch = kwargs['upsert_epoch']
+        self.delete_epoch = kwargs['delete_epoch']
+
+        class ForMemoryDatagen(kwargs['dataget_class']):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.atom_json, self.sarr_json = [], []
+
+            def json_consumer(self, atom_json, sarr_json):
+                self.atom_json.append(atom_json)
+                self.sarr_json.append(sarr_json)
+
+            def reset_generation(self, start_id, end_id):
+                self.start_id = start_id
+                self.end_id = end_id
+                self.atom_json = []
+                self.sarr_json = []
+
+        self.datagen = ForMemoryDatagen(start_id=0, end_id=self.dataset_size)
         super().__init__()
 
-    @abc.abstractmethod
-    def generate_atom_dataset(self, insert_handler, starting_id, ending_id):
-        pass
-
-    @abc.abstractmethod
-    def generate_sarr_dataset(self, insert_handler, starting_id, ending_id):
-        pass
+    def _generate_json(self, dataverse, start_id, end_id):
+        if dataverse == 'atom':
+            self.datagen.reset_generation(start_id, end_id)
+            self.datagen()
+            return self.datagen.atom_json
+        else:
+            self.datagen.reset_generation(start_id, end_id)
+            self.datagen()
+            return self.datagen.sarr_json
 
     def _perform_insert_upsert(self, i, dataverse, operation, text):
         results = self.execute_sqlpp(f"""
@@ -45,8 +64,7 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         logger.debug(f'{operation.capitalize()} {i + 1} was successful. '
                      f'Execution time: {results["metrics"]["elapsedTime"]}')
 
-        # This Remove the expression trees, and reduce the size of our results.
-        results['plans'] = {
+        results['plans'] = {  # This removes the expression trees, and reduce the size of our results.
             'logicalPlan': re.sub(
                 'ordered-list-constructor\({.*?}\)', 'ordered-list-constructor({...})',
                 results['plans']['logicalPlan']
@@ -61,46 +79,38 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         return True
 
     def _benchmark_insert(self, dataverse):
-        for i in range(int(self.TARGET_INSERT_SIZE / self.INSERT_CHUNK_SIZE)):
-            proposed_k = ''.join(random.choice(string.ascii_uppercase) for _ in range(20))
-            while proposed_k in self.chunks.keys():  # This MUST be unique.
-                proposed_k = ''.join(random.choice(string.ascii_uppercase) for _ in range(20))
-            self.chunks[proposed_k] = set()
-            logger.debug(f'Using chunk identifier {proposed_k}.')
-            insert_chunk = []
-
-            def _insert_handler(out_json):
-                out_json['chunk_id'] = proposed_k
-                self.chunks[proposed_k].add(out_json[self.primary_key])  # Save memory by not storing the prefix.
-                out_json[self.primary_key] = out_json['chunk_id'] + out_json[self.primary_key]
-                insert_chunk.append(json.dumps(out_json))
-
-            if dataverse == 'atom':
-                self.generate_atom_dataset(_insert_handler, 0, self.INSERT_CHUNK_SIZE)
-            else:
-                self.generate_sarr_dataset(_insert_handler, 0, self.INSERT_CHUNK_SIZE)
+        working_range = {'start': self.dataset_size, 'end': self.dataset_size + self.chunk_size}
+        for i in range(self.insert_epoch):
+            insert_chunk = self._generate_json(dataverse, working_range['start'], working_range['end'])
 
             # Perform the insert itself.
-            if not self._perform_insert_upsert(i, dataverse, 'insert', ',\n'.join(insert_chunk)):
+            insert_text = ',\n'.join([json.loads(s) for s in insert_chunk])
+            if not self._perform_insert_upsert(i, dataverse, 'insert', insert_text):
                 return False
 
         return True
 
     def _benchmark_upsert(self, dataverse):
-        for i, (chunk_key, chunk) in enumerate(self.chunks.items()):
-            logger.debug(f'Working with chunk identifier {chunk_key}.')
-            chunk_iterator = iter(chunk)
-            upsert_chunk = []
+        for i in range(self.upsert_epoch):
+            upsert_chunk = self._generate_json(dataverse, 0, self.chunk_size)
 
-            def _upsert_handler(out_json):
-                out_json['chunk_id'] = chunk_key
-                out_json[self.primary_key] = out_json['chunk_id'] + next(chunk_iterator)
-                upsert_chunk.append(json.dumps(out_json))
+            # Generate a random set of primary keys and chunk IDs to use for our UPSERT.
+            primary_key_map = dict()
+            for _ in range(self.chunk_size):
+                # We are only trying to update "original" values, to minimize cache hits.
+                new_primary_key = random.randint(0, self.dataset_size)
+                new_chunk_id = new_primary_key % self.chunk_size
+                while new_primary_key in primary_key_map:
+                    new_primary_key = random.randint(0, self.dataset_size)
+                    new_chunk_id = new_primary_key % self.chunk_size
 
-            if dataverse == 'atom':
-                self.generate_atom_dataset(_upsert_handler, 0, self.INSERT_CHUNK_SIZE)
-            else:
-                self.generate_sarr_dataset(_upsert_handler, 0, self.INSERT_CHUNK_SIZE)
+                # We are adding a new PK to our hash map.
+                primary_key_map[new_primary_key] = new_chunk_id
+
+            # Update our UPSERT chunk to use these different PKs + chunk IDs.
+            for record, (new_pk, new_chunk_id) in zip(upsert_chunk, primary_key_map.items()):
+                record[self.primary_key] = new_pk
+                record['chunk_id'] = new_chunk_id
 
             # Perform the upsert itself.
             if not self._perform_insert_upsert(i, dataverse, 'upsert', ',\n'.join(upsert_chunk)):
@@ -109,20 +119,18 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         return True
 
     def _benchmark_delete(self, dataverse):
-        # To avoid scanning the entire dataset for each deletion, we create an index on the chunk key.
-        logger.info(f'Now indexing chunk_id for ShopALot.{dataverse.upper()}.{self.dataset_name}.')
-        results = self.execute_sqlpp(f"""
-            USE ShopALot.{dataverse.upper()};
-            CREATE INDEX {self.dataset_name.lower()}ChunkIdx ON {self.dataset_name.capitalize()} (chunk_id : string ?);
-        """)
-        if results['status'] != 'success':
-            logger.error(f'Unable to create index on chunk_id for ShopALot.{dataverse.upper()}.{self.dataset_name}.')
-            return False
+        delete_chunk_ids = set()
+        for i in range(self.delete_epoch):
+            chunk_id = random.randint(0, self.chunk_size)
+            while chunk_id in delete_chunk_ids:
+                chunk_id = random.randint(0, self.chunk_size)
 
-        for i, chunk_key in enumerate(self.chunks.keys()):
+            logger.debug(f'Deleting using chunk_id: {chunk_id}')
+            delete_chunk_ids.add(chunk_id)
+
             results = self.execute_sqlpp(f"""
                 DELETE FROM ShopALot.{dataverse.upper()}.{self.dataset_name}
-                WHERE chunk_id = "{chunk_key}";
+                WHERE chunk_id = "{chunk_id}";
             """)
             if results['status'] != 'success':
                 logger.error(f'Delete {i + 1} was not successful.')
@@ -134,8 +142,28 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
 
         return True
 
+    def _index_chunk_id(self):
+        logger.info('Indexing chunk_id for ATOM and SARR.')
+        results = self.execute_sqlpp(f"""
+            USE ShopALot.ATOM;
+            CREATE INDEX atom{self.dataset_name.capitalize()}ChunkIdx ON 
+                {self.dataset_name.capitalize()} (chunk_id : string ?);
+            USE ShopALot.SARR;
+            CREATE INDEX atom{self.dataset_name.capitalize()}ChunkIdx ON 
+                {self.dataset_name.capitalize()} (chunk_id : string ?);
+        """)
+        if results['status'] != 'success':
+            logger.error('Could not index chunk_id.')
+            logger.error(f'JSON Dump: {results}')
+            return False
+
+        return True
+
     def perform_benchmark(self):
         if not self.do_indexes_exist(self.index_names, self.dataset_name):
+            return
+
+        if not self._index_chunk_id():
             return
 
         logger.info(f'Executing insert_upsert_delete on {self.dataset_name} for ATOM.')
@@ -168,9 +196,9 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         logger.info('Removing the index on chunk_id for both ATOM and SARR.')
         results = self.execute_sqlpp(f"""
             USE ShopALot.ATOM;
-            DROP INDEX {self.dataset_name}.{self.dataset_name.lower()}ChunkIdx;
+            DROP INDEX {self.dataset_name.capitalize()}.{self.dataset_name.lower()}ChunkIdx;
             USE ShopALot.SARR;
-            DROP INDEX {self.dataset_name}.{self.dataset_name.lower()}ChunkIdx;
+            DROP INDEX {self.dataset_name.capitalize()}.{self.dataset_name.lower()}ChunkIdx;
         """)
         if results['status'] != 'success':
             logger.warning('Could not drop the index on chunk_id.')
