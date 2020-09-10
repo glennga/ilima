@@ -14,15 +14,19 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
         self.dataset_name = kwargs['dataset_name']
         super().__init__()
 
+        # Determine where our sample data is located.
+        with open(self.config['shopalot']) as f:
+            shopalot_json = json.load(f)
+
         logger.info('Loading ATOM sample data into memory.')
         self.sample_atom_data = []
-        with open(self.config['resources'] + '/' + 'sample_data' + '/' + f'ATOM-{self.dataset_name}Sample.json') as f:
+        with open(shopalot_json[self.dataset_name.lower() + 's']['atomDataverse']['sampleFilename']) as f:
             for line in f:
                 self.sample_atom_data.append(json.loads(line))
 
         logger.info('Loading SARR sample data into memory.')
         self.sample_sarr_data = []
-        with open(self.config['resources'] + '/' + 'sample_data' + '/' + f'SARR-{self.dataset_name}Sample.json') as f:
+        with open(shopalot_json[self.dataset_name.lower() + 's']['sarrDataverse']['sampleFilename']) as f:
             for line in f:
                 self.sample_sarr_data.append(json.loads(line))
 
