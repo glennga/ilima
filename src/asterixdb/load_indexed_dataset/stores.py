@@ -8,36 +8,10 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-StoresEighth.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-StoresEighth.json"
-        super().__init__(**{
-            'sarr_type_ddl': """
-                CREATE TYPE StoresType AS {
-                    store_id: string,
-                    `name`: string,
-                    address: {
-                        city: string,
-                        street: string,
-                        zip_code: string
-                    },
-                    phone: string,
-                    categories: [string]
-                };
-            """,
-            'atom_type_ddl': """
-                CREATE TYPE StoresType AS {
-                    store_id: string,
-                    `name`: string,
-                    address: {
-                        city: string,
-                        street: string,
-                        zip_code: string
-                    },
-                    phone: string,
-                    category: string
-                };
-            """
-        })
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-StoresEighth.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-StoresEighth.json"
+        super().__init__(sarr_type_ddl="CREATE TYPE StoresType AS { store_id: string };",
+                         atom_type_ddl="CREATE TYPE StoresType AS { store_id: string };")
 
     def benchmark_sarr(self, run_number):
         results = self.execute_sqlpp("""
@@ -45,7 +19,7 @@ class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.SARR;
             CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
-            CREATE INDEX storesCatIdx ON Stores (UNNEST categories);
+            CREATE INDEX storesCatIdx ON Stores (UNNEST categories : string ?);
 
             LOAD DATASET ShopALot.SARR.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
@@ -66,7 +40,7 @@ class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
 
              USE ShopALot.ATOM;
              CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
-             CREATE INDEX storesCatIdx ON Stores (category);
+             CREATE INDEX storesCatIdx ON Stores (category : string ?);
 
              LOAD DATASET ShopALot.ATOM.Stores USING localfs (
                  ("path"="%s"), ("format"="json")

@@ -8,40 +8,10 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-OrdersEighth.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-OrdersEighth.json"
-        super().__init__(**{
-            'sarr_type_ddl': """
-                CREATE TYPE OrdersType AS {
-                    order_id: string,
-                    total_price: float,
-                    time_placed: string,
-                    user_id: string,
-                    store_id: string,
-                    items: [{
-                        item_id: string,
-                        qty: integer,
-                        price: float,
-                        product_id: string
-                    }]
-                };
-            """,
-            'atom_type_ddl': """
-                CREATE TYPE OrdersType AS {
-                    order_id: string,
-                    total_price: float,
-                    time_placed: string,
-                    user_id: string,
-                    store_id: string,
-                    item: {
-                        item_id: string,
-                        qty: integer,
-                        price: float,
-                        product_id: string
-                    }
-                };
-            """
-        })
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-OrdersEighth.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-OrdersEighth.json"
+        super().__init__(sarr_type_ddl="CREATE TYPE OrdersType AS { order_id: string };",
+                         atom_type_ddl="CREATE TYPE OrdersType AS { order_id: string };")
 
     def benchmark_sarr(self, run_number):
         results = self.execute_sqlpp("""
@@ -49,8 +19,8 @@ class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.SARR;
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty);
-            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id);
+            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : string ?);
+            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string ?);
 
             LOAD DATASET ShopALot.SARR.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
@@ -71,8 +41,8 @@ class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.ATOM;
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty);
-            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id);
+            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty : string ?);
+            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id : string ?);
 
             LOAD DATASET ShopALot.ATOM.Orders USING localfs (
                 ("path"="%s"), ("format"="json")

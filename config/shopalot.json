@@ -2,29 +2,29 @@
   "users": {
     "atomDataverse": {
       "fullFilename": "resources/full_data/ATOM-UsersFull.json",
-      "eighthFilename": "resources/sample_data/ATOM-UsersEighth.json",
+      "eighthFilename": "resources/full_data/ATOM-UsersEighth.json",
       "sampleFilename": "resources/sample_data/ATOM-UsersSample.json"
     },
     "sarrDataverse": {
       "fullFilename": "resources/full_data/SARR-UsersFull.json",
-      "eighthFilename": "resources/sample_data/SARR-UsersEighth.json",
+      "eighthFilename": "resources/full_data/SARR-UsersEighth.json",
       "sampleFilename": "resources/sample_data/SARR-UsersSample.json"
     },
     "idRange": {
       "start": 0,
-      "end": 10000
+      "end": 200000000
     },
     "chunkSize": 1000
   },
   "stores": {
     "atomDataverse": {
       "fullFilename": "resources/full_data/ATOM-StoresFull.json",
-      "eighthFilename": "resources/sample_data/ATOM-StoresEighth.json",
+      "eighthFilename": "resources/full_data/ATOM-StoresEighth.json",
       "sampleFilename": "resources/sample_data/ATOM-StoresSample.json"
     },
     "sarrDataverse": {
       "fullFilename": "resources/full_data/SARR-StoresFull.json",
-      "eighthFilename": "resources/sample_data/SARR-StoresEighth.json",
+      "eighthFilename": "resources/full_data/SARR-StoresEighth.json",
       "sampleFilename": "resources/sample_data/SARR-StoresSample.json"
     },
     "idRange": {
@@ -36,12 +36,12 @@
   "orders": {
     "atomDataverse": {
       "fullFilename": "resources/full_data/ATOM-OrdersFull.json",
-      "eighthFilename": "resources/sample_data/ATOM-OrdersEighth.json",
+      "eighthFilename": "resources/full_data/ATOM-OrdersEighth.json",
       "sampleFilename": "resources/sample_data/ATOM-OrdersSample.json"
     },
     "sarrDataverse": {
       "fullFilename": "resources/full_data/SARR-OrdersFull.json",
-      "eighthFilename": "resources/sample_data/SARR-OrdersEighth.json",
+      "eighthFilename": "resources/full_data/SARR-OrdersEighth.json",
       "sampleFilename": "resources/sample_data/SARR-OrdersSample.json"
     },
     "idRange": {

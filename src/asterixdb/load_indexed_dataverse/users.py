@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-UsersFull.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-UsersFull.json"
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-UsersFull.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-UsersFull.json"
         super().__init__()
 
     def _benchmark_load_sarr(self):
@@ -18,20 +18,8 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
             CREATE DATAVERSE ShopALot.SARR;
             USE ShopALot.SARR;
 
-            CREATE TYPE UsersType AS {
-                user_id: string,
-                `name`: {
-                    `first`: string,
-                    `last`: string
-                },
-                phones: [{
-                    `type`: string,
-                    `number`: string
-                }]
-            };
-
+            CREATE TYPE UsersType AS { user_id: string };
             CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-
             LOAD DATASET ShopALot.SARR.Users USING localfs (
                 ("path"="%s"), ("format"="json")
             );
@@ -46,20 +34,8 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
             CREATE DATAVERSE ShopALot.ATOM;
             USE ShopALot.ATOM;
 
-            CREATE TYPE UsersType AS {
-                user_id: string,
-                `name`: {
-                    `first`: string,
-                    `last`: string
-                },
-                phone: {
-                    `type`: string,
-                    `number`: string
-                }
-            };
-
+            CREATE TYPE UsersType AS { user_id: string };
             CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-
             LOAD DATASET ShopALot.ATOM.Users USING localfs (
                 ("path"="%s"), ("format"="json")
             );

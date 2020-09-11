@@ -8,36 +8,10 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-UsersEighth.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-UsersEighth.json"
-        super().__init__(**{
-            'sarr_type_ddl': """
-                CREATE TYPE UsersType AS {
-                    user_id: string,
-                    `name`: {
-                        `first`: string,
-                        `last`: string
-                    },
-                    phones: [{
-                        `type`: string,
-                        `number`: string
-                    }]
-                };
-            """,
-            'atom_type_ddl': """
-                CREATE TYPE UsersType AS {
-                    user_id: string,
-                    `name`: {
-                        `first`: string,
-                        `last`: string
-                    },
-                    phone: {
-                        `type`: string,
-                        `number`: string
-                    }
-                };
-            """
-        })
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-UsersEighth.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-UsersEighth.json"
+        super().__init__(sarr_type_ddl="CREATE TYPE UsersType AS { user_id: string };",
+                         atom_type_ddl="CREATE TYPE UsersType AS { user_id: string };")
 
     def benchmark_sarr(self, run_number):
         results = self.execute_sqlpp("""
@@ -45,7 +19,7 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.SARR;
             CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number);
+            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
 
             LOAD DATASET ShopALot.SARR.Users USING localfs (
                 ("path"="%s"), ("format"="json")
@@ -66,7 +40,7 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
              USE ShopALot.ATOM;
              CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-             CREATE INDEX usersNumberIdx ON Users(phone.number);
+             CREATE INDEX usersNumberIdx ON Users(phone.number : string ?);
 
              LOAD DATASET ShopALot.ATOM.Users USING localfs (
                  ("path"="%s"), ("format"="json")

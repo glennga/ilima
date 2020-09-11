@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/SARR-OrdersFull.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/datagen/shopalot-output/ATOM-OrdersFull.json"
+        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-OrdersFull.json"
+        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-OrdersFull.json"
         super().__init__()
 
     def _benchmark_load_sarr(self):
@@ -18,28 +18,14 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
             CREATE DATAVERSE ShopALot.SARR;
             USE ShopALot.SARR;
 
-            CREATE TYPE OrdersType AS {
-                order_id: string,
-                total_price: float,
-                time_placed: string,
-                user_id: string,
-                store_id: string,
-                items: [{
-                    item_id: string,
-                    qty: integer,
-                    price: float,
-                    product_id: string
-                }]
-            };
-
+            CREATE TYPE OrdersType AS { order_id: string };
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-
             LOAD DATASET ShopALot.SARR.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty);
-            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id);
+            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : string ?);
+            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string ?);
         """ % self.sarr_json)
         self.log_results(results)
 
@@ -49,28 +35,14 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
             CREATE DATAVERSE ShopALot.ATOM;
             USE ShopALot.ATOM;
 
-            CREATE TYPE OrdersType AS {
-                order_id: string,
-                total_price: float,
-                time_placed: string,
-                user_id: string,
-                store_id: string,
-                item: {
-                    item_id: string,
-                    qty: integer,
-                    price: float,
-                    product_id: string
-                }
-            };
-
+            CREATE TYPE OrdersType AS { order_id: string };
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-
             LOAD DATASET ShopALot.ATOM.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
             );
             
-            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty);
-            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id);
+            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty : string ?);
+            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id : string ?);
         """ % self.atom_json)
         self.log_results(results)
 
