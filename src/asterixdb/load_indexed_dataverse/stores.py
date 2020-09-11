@@ -40,7 +40,7 @@ class LoadIndexedStoresDataverse(AbstractBenchmarkRunnable):
                 ("path"="%s"), ("format"="json")
             );
             
-            CREATE INDEX storesCatIdx ON Stores(category : string);
+            CREATE INDEX storesCatIdx ON Stores(category : string ?);
         """ % self.atom_json)
         self.log_results(results)
 

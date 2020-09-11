@@ -24,7 +24,7 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number);
+            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
         """ % self.sarr_json)
         self.log_results(results)
 
@@ -40,7 +40,7 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX usersNumberIdx ON Users (phone.number);
+            CREATE INDEX usersNumberIdx ON Users (phone.number : string ?);
         """ % self.atom_json)
         self.log_results(results)
 
