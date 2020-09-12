@@ -211,13 +211,16 @@ if __name__ == '__main__':
     with open(command_line_args.config) as config_file:
         main_config_json = json.load(config_file)
 
+    # Determine our parent class, based on the given dataset.
+    if command_line_args.dataset == 'user':
+        datagen_parent = AbstractUsersDatagen
+    elif command_line_args == 'store':
+        datagen_parent = AbstractStoresDatagen
+    else:
+        datagen_parent = AbstractOrdersDatagen
 
-    class ToFileDatagen({  # Determine our parent class.
-                            'user': AbstractUsersDatagen,
-                            'store': AbstractStoresDatagen,
-                            'order': AbstractOrdersDatagen
-                        }[command_line_args.dataset]):
 
+    class ToFileDatagen(datagen_parent):
         def __init__(self, **kwargs):
             config = {
                 'start_id': kwargs['idRange']['start'],
@@ -240,6 +243,8 @@ if __name__ == '__main__':
                 'eighth': open(kwargs['sarrDataverse']['eighthFilename'], 'w'),
                 'sample': open(kwargs['sarrDataverse']['sampleFilename'], 'w')
             }
+
+            self.sample_set = set(random.sample(range(self.start_id, self.end_id), config['user']['sampleSize']))
             self.datagen_counter = kwargs['idRange']['start']
 
         @staticmethod
@@ -252,7 +257,7 @@ if __name__ == '__main__':
                 self._write_to_file(self.atom_fps['eighth'], atom_json)
                 self._write_to_file(self.sarr_fps['eighth'], sarr_json)
 
-            if self.datagen_counter < 1000:
+            if self.datagen_counter in self.sample_set:
                 self._write_to_file(self.atom_fps['sample'], atom_json)
                 self._write_to_file(self.sarr_fps['sample'], sarr_json)
 
@@ -263,6 +268,7 @@ if __name__ == '__main__':
         def close_resources(self):
             [fp.close() for fp in self.atom_fps.values()]
             [fp.close() for fp in self.sarr_fps.values()]
+
 
     # Invoke our datagen.
     ToFileDatagen(**(main_config_json[command_line_args.dataset + 's']))()

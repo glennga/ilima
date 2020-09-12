@@ -14,7 +14,8 @@
       "start": 0,
       "end": 200000000
     },
-    "chunkSize": 1000
+    "chunkSize": 1000,
+    "sampleSize": 12000
   },
   "stores": {
     "atomDataverse": {
@@ -31,7 +32,8 @@
       "start": 0,
       "end": 10000
     },
-    "chunkSize": 1000
+    "chunkSize": 1000,
+    "sampleSize": 12000
   },
   "orders": {
     "atomDataverse": {
@@ -48,6 +50,7 @@
       "start": 0,
       "end": 10000
     },
-    "chunkSize": 1000
+    "chunkSize": 1000,
+    "sampleSize": 12000
   }
 }
