@@ -4,10 +4,13 @@ CREATE DATAVERSE BenchmarkAnalysis;
 USE BenchmarkAnalysis;
 
 CREATE TYPE GenericTypeSelfGeneratedKey AS {
-    id: string
+    id: string,
+    logTime: string,
+    `dataverse`: string,
+    executionID: string
 };
 CREATE DATASET ResultsDataset (GenericTypeSelfGeneratedKey) PRIMARY KEY id;
-CREATE INDEX executionIDIdx ON ResultsDataset (executionID : string ?);
+CREATE INDEX executionIDIdx ON ResultsDataset (executionID);
 
 CREATE FEED ResultsSocketFeed WITH {
     "adapter-name": "socket_adapter",
