@@ -24,47 +24,48 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
         pass
 
     def perform_benchmark(self):
-        logger.info('Executing load_indexed_dataset on Users for SARR.')
-        logger.info('Starting Algebricks-layer bulk loading for SARR.')
-        logger.info('Creating empty dataverse for SARR.')
-        results = self.execute_sqlpp(f"""
-            DROP DATAVERSE ShopALot.SARR IF EXISTS;
-            CREATE DATAVERSE ShopALot.SARR;
-            USE ShopALot.SARR;
-            {self.sarr_type_ddl}
+        if self.dataverse == self.SARR_DATAVERSE:
+            logger.info('Executing load_indexed_dataset on Users for SARR.')
+            logger.info('Starting Algebricks-layer bulk loading for SARR.')
+            logger.info('Creating empty dataverse for SARR.')
+            results = self.execute_sqlpp(f"""
+                DROP DATAVERSE ShopALot.SARR IF EXISTS;
+                CREATE DATAVERSE ShopALot.SARR;
+                USE ShopALot.SARR;
+                {self.sarr_type_ddl}
+                """)
+            if results['status'] != 'success':
+                logger.error(f'Result of SARR dataverse creation was not success, but {results["status"]}.')
+                return
+            self.log_results(results)
+
+            for i in range(self.NUMBER_OF_REPEATS):
+                if not self.benchmark_sarr(i):
+                    return
+        else:
+            logger.info('Executing load_indexed_dataset on Users for ATOM.')
+            logger.info('Starting Algebricks-layer bulk loading for ATOM.')
+            logger.info('Creating empty dataverse for ATOM.')
+            results = self.execute_sqlpp(f"""
+                DROP DATAVERSE ShopALot.ATOM IF EXISTS;
+                CREATE DATAVERSE ShopALot.ATOM;
+                USE ShopALot.ATOM;
+                {self.atom_type_ddl}
             """)
-        if results['status'] != 'success':
-            logger.error(f'Result of SARR dataverse creation was not success, but {results["status"]}.')
-            return
-        self.log_results(results)
-
-        for i in range(self.NUMBER_OF_REPEATS):
-            if not self.benchmark_sarr(i):
+            if results['status'] != 'success':
+                logger.error(f'Result of ATOM dataverse creation was not success, but {results["status"]}.')
                 return
+            self.log_results(results)
 
-        logger.info('Executing load_indexed_dataset on Users for ATOM.')
-        logger.info('Starting Algebricks-layer bulk loading for ATOM.')
-        logger.info('Creating empty dataverse for ATOM.')
-        results = self.execute_sqlpp(f"""
-            DROP DATAVERSE ShopALot.ATOM IF EXISTS;
-            CREATE DATAVERSE ShopALot.ATOM;
-            USE ShopALot.ATOM;
-            {self.atom_type_ddl}
-        """)
-        if results['status'] != 'success':
-            logger.error(f'Result of ATOM dataverse creation was not success, but {results["status"]}.')
-            return
-        self.log_results(results)
-
-        for i in range(self.NUMBER_OF_REPEATS):
-            if not self.benchmark_atom(i):
-                return
+            for i in range(self.NUMBER_OF_REPEATS):
+                if not self.benchmark_atom(i):
+                    return
 
     def perform_post(self):
         logger.info('Dropping the SARR and ATOM dataverses.')
         results = self.execute_sqlpp("""
-            DROP DATAVERSE ShopALot.ATOM;
-            DROP DATAVERSE ShopALot.SARR;
+            DROP DATAVERSE ShopALot.ATOM IF EXISTS;
+            DROP DATAVERSE ShopALot.SARR IF EXISTS;
         """)
         if results['status'] != 'success':
             logger.error(f'Result of ATOM + SARR dataverse deletion was not success, but {results["status"]}.')

@@ -7,9 +7,14 @@ logger = logging.getLogger(__name__)
 
 
 class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
+    # PATH_PREFIX = "localhost:///Users/glenngalvizo/Documents/Projects/asterixdb/ilima-repo/resources/"
+    # SARR_PATH = PATH_PREFIX + "SARR-UsersSample.json"
+    # ATOM_PATH = PATH_PREFIX + "ATOM-UsersSample.json"
+    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
+    SARR_PATH = PATH_PREFIX + "SARR-UsersEighth.json"
+    ATOM_PATH = PATH_PREFIX + "ATOM-UsersEighth.json"
+
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-UsersEighth.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-UsersEighth.json"
         super().__init__(sarr_type_ddl="CREATE TYPE UsersType AS { user_id: string };",
                          atom_type_ddl="CREATE TYPE UsersType AS { user_id: string };")
 
@@ -24,7 +29,7 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
             LOAD DATASET ShopALot.SARR.Users USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-        """ % self.sarr_json)
+        """ % self.SARR_PATH)
         if results['status'] != 'success':
             logger.error(f'Result of bulk-loading was not success, but {results["status"]}.')
             return False
@@ -45,7 +50,7 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
              LOAD DATASET ShopALot.ATOM.Users USING localfs (
                  ("path"="%s"), ("format"="json")
              );
-         """ % self.atom_json)
+         """ % self.ATOM_PATH)
         if results['status'] != 'success':
             logger.error(f'Result of bulk-loading was not success, but {results["status"]}.')
             return False
@@ -57,4 +62,4 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
 
 if __name__ == '__main__':
-    LoadIndexedUsersDataset()()
+    LoadIndexedUsersDataset().invoke()
