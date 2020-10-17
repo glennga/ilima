@@ -7,9 +7,14 @@ logger = logging.getLogger(__name__)
 
 
 class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
+    # PATH_PREFIX = "localhost:///Users/glenngalvizo/Documents/Projects/asterixdb/ilima-repo/resources/"
+    # SARR_PATH = PATH_PREFIX + "SARR-OrdersSample.json"
+    # ATOM_PATH = PATH_PREFIX + "ATOM-OrdersSample.json"
+    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
+    SARR_PATH = PATH_PREFIX + "SARR-OrdersFull.json"
+    ATOM_PATH = PATH_PREFIX + "ATOM-OrdersFull.json"
+
     def __init__(self):
-        self.sarr_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/SARR-OrdersFull.json"
-        self.atom_json = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/full_data/ATOM-OrdersFull.json"
         super().__init__()
 
     def _benchmark_load_sarr(self):
@@ -20,13 +25,14 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
 
             CREATE TYPE OrdersType AS { order_id: string };
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
+            CREATE DATASET OrdersBuffer (OrdersType) PRIMARY KEY order_id;
             LOAD DATASET ShopALot.SARR.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
             );
 
             CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : string ?);
             CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string ?);
-        """ % self.sarr_json)
+        """ % self.SARR_PATH)
         self.log_results(results)
 
     def _benchmark_load_atom(self):
@@ -37,25 +43,24 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
 
             CREATE TYPE OrdersType AS { order_id: string };
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
+            CREATE DATASET OrdersBuffer (OrdersType) PRIMARY KEY order_id;
             LOAD DATASET ShopALot.ATOM.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
             );
             
             CREATE INDEX ordersItemQtyIdx ON Orders(item.qty : string ?);
             CREATE INDEX ordersItemProductIdx ON Orders(item.product_id : string ?);
-        """ % self.atom_json)
+        """ % self.ATOM_PATH)
         self.log_results(results)
 
     def perform_benchmark(self):
-        logger.info('Executing load_indexed_dataverse on Orders for SARR.')
-        self._benchmark_load_sarr()
-
-        logger.info('Executing load_indexed_dataverse on Orders for ATOM.')
-        self._benchmark_load_atom()
-
-    def perform_post(self):
-        pass
+        if self.dataverse == self.SARR_DATAVERSE:
+            logger.info('Executing load_indexed_dataverse on Orders for SARR.')
+            self._benchmark_load_sarr()
+        else:
+            logger.info('Executing load_indexed_dataverse on Orders for ATOM.')
+            self._benchmark_load_atom()
 
 
 if __name__ == '__main__':
-    LoadIndexedOrdersDataverse()()
+    LoadIndexedOrdersDataverse().invoke()
