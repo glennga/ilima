@@ -15,9 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractBenchmarkRunnable(abc.ABC):
+    SARR_DATAVERSE = 'sarr'
+    ATOM_DATAVERSE = 'atom'
+
     @staticmethod
     def _collect_config():
         parser = argparse.ArgumentParser(description='Benchmark a collection of queries on an AsterixDB instance.')
+        parser.add_argument('dataverse', type=str, choices=['atom', 'sarr'], help='Dataverse to benchmark.')
         parser.add_argument('--config', type=str, default='config/asterixdb.json', help='Path to the config file.')
         parser.add_argument('--shopalot', type=str, default='config/shopalot.json', help='Path to the datagen file.')
         parser_args = parser.parse_args()
@@ -25,6 +29,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
             config_json = json.load(config_file)
 
         config_json['shopalot'] = parser_args.shopalot
+        config_json['dataverse'] = parser_args.dataverse
         return config_json
 
     @staticmethod
@@ -41,7 +46,8 @@ class AbstractBenchmarkRunnable(abc.ABC):
         subprocess_pipe.stdout.close()
 
     def _generate_results_dir(self):
-        results_dir = 'out/A-' + self.__class__.__name__ + datetime.datetime.now().strftime('-%Y-%m-%d_%H-%M-%S')
+        results_dir = 'out/' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '-' + \
+                      self.__class__.__name__ + '-' + self.dataverse.upper() + '-A'
         os.mkdir(os.getcwd() + '/' + results_dir)
         logger.info(f'Results will be stored in: {results_dir}')
 
@@ -49,14 +55,13 @@ class AbstractBenchmarkRunnable(abc.ABC):
 
     def __init__(self, **kwargs):
         self.config = {**self._collect_config(), **kwargs}
-        if 'is_profile' not in self.config.keys():
-            self.config['is_profile'] = True
         logger.info(f'Using the following configuration: {self.config}')
 
         self.nc_uri = self.config['benchmark']['nodeController']['address'] + ':' + \
                       str(self.config['benchmark']['nodeController']['port'])
         self.nc_uri = 'http://' + self.nc_uri + '/query/service'
         self.execution_id = str(uuid.uuid4())
+        self.dataverse = self.config['dataverse']
 
         # Setup our benchmarking outputs (to analysis cluster, to file).
         self.results_dir = self._generate_results_dir()
@@ -67,35 +72,38 @@ class AbstractBenchmarkRunnable(abc.ABC):
 
     def do_indexes_exist(self, index_names, dataset_name):
         for index_name in index_names:
-            logger.info(f'Checking that the index "{index_name}" exists on ATOM.')
-            results = self.execute_sqlpp(f"""
-                SELECT *
-                FROM `Metadata`.`Index`
-                WHERE IndexName = "{index_name}" AND 
-                      DataverseName = "ShopALot.ATOM" AND 
-                      DatasetName = "{dataset_name}";
-            """)
-            if len(results['results']) == 0:
-                logger.error(f'Index "{index_name}" on ATOM does not exist.')
-                return False
+            if self.dataverse == self.ATOM_DATAVERSE:
+                logger.info(f'Checking that the index "{index_name}" exists on ATOM.')
+                results = self.execute_sqlpp(f"""
+                    SELECT *
+                    FROM `Metadata`.`Index`
+                    WHERE IndexName = "{index_name}" AND 
+                          DataverseName = "ShopALot.ATOM" AND 
+                          DatasetName = "{dataset_name}";
+                """)
+                if len(results['results']) == 0:
+                    logger.error(f'Index "{index_name}" on ATOM does not exist.')
+                    return False
 
-            logger.info(f'Checking that the index "{index_name}" exists on SARR.')
-            results = self.execute_sqlpp(f"""
-                SELECT *
-                FROM `Metadata`.`Index`
-                WHERE IndexName = "{index_name}" AND 
-                      DataverseName = "ShopALot.SARR" AND 
-                      DatasetName = "{dataset_name}";
-            """)
-            if len(results['results']) == 0:
-                logger.error(f'Index "{index_name}" on SARR does not exist.')
-                return False
+            else:
+                logger.info(f'Checking that the index "{index_name}" exists on SARR.')
+                results = self.execute_sqlpp(f"""
+                    SELECT *
+                    FROM `Metadata`.`Index`
+                    WHERE IndexName = "{index_name}" AND 
+                          DataverseName = "ShopALot.SARR" AND 
+                          DatasetName = "{dataset_name}";
+                """)
+                if len(results['results']) == 0:
+                    logger.error(f'Index "{index_name}" on SARR does not exist.')
+                    return False
 
         return True
 
     def log_results(self, results):
         results['logTime'] = str(datetime.datetime.now())
         results['executionID'] = self.execution_id
+        results['dataverse'] = self.dataverse
         results['configJSON'] = self.config
 
         # To the results file..
@@ -112,37 +120,42 @@ class AbstractBenchmarkRunnable(abc.ABC):
             logger.info('Result successfully sent to cluster.')
 
     def execute_sqlpp(self, statement):
+        lean_statement = ' '.join(statement.split())
         query_parameters = {
-            'statement': statement,
-            'client_context_id': str(uuid.uuid4()),
+            'statement': lean_statement,
             'plan-format': 'STRING',
-            'expression-tree': True,
+            'profile': 'timings',
             'rewritten-expression-tree': True,
-            'logical-plan': True,
             'optimized-logical-plan': True,
-            'job': True,
-            'profile': 'counts'
+            'expression-tree': True,
+            'logical-plan': True,
+            'job': True
         }
-        if not self.config['is_profile']:
-            del query_parameters['profile']
 
         response_json = requests.post(self.nc_uri, query_parameters).json()
         if response_json['status'] != 'success':
             logger.warning(f'Status of executing statement {statement} not successful, '
                            f'but instead {response_json["status"]}.')
             logger.warning(f'JSON dump: {response_json}')
+
+        # We get our job as a JSON string, but it would be beneficial to store this as an object.
+        if 'plans' in response_json and 'job' in response_json['plans']:
+            response_json['plans']['job'] = json.loads(response_json['plans']['job'])
+
+        # Add the query to response.
+        response_json['statement'] = lean_statement
         return response_json
 
     @abc.abstractmethod
     def perform_benchmark(self):
         pass
 
-    @abc.abstractmethod
     def perform_post(self):
         pass
 
-    def __call__(self, *args, **kwargs):
+    def invoke(self):
         logger.info(f'Working with execution id: {self.execution_id}.')
+        logger.info(f'Specified dataverse is: {self.dataverse}.')
 
         # Restart the cluster. For queries, this minimizes the chance that we access a cached page.
         logger.info('Running STOP command.')
@@ -151,7 +164,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self._call_subprocess(self.config['benchmark']['startCommand'])
         logger.info('Waiting for cluster to start...')
         while True:
-            time.sleep(2)
+            time.sleep(5)
             try:
                 starting_response_json = requests.post(self.nc_uri, {
                     'statement': "SELECT 1;",
@@ -161,11 +174,11 @@ class AbstractBenchmarkRunnable(abc.ABC):
                     break
                 else:
                     logger.info(f'Status from initial connection to cluster not success, '
-                                f'but {starting_response_json["status"]}. Trying again in 2 seconds...')
+                                f'but {starting_response_json["status"]}. Trying again in 5 seconds...')
                     logger.info(f'JSON dump: {starting_response_json}')
 
             except requests.exceptions.ConnectionError:
-                logger.info('Connection refused, trying again in 2 seconds...')
+                logger.info('Connection refused, trying again in 5 seconds...')
 
         # Perform the benchmark.
         logger.debug('Executing the benchmark.')
@@ -181,5 +194,5 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self.results_socket.close()
         logger.info('Benchmark has finished executing.')
 
-        # Scare me in the middle of the night :-)
-        os.system('say "Benchmark has finished executing."')
+        # Scare me in the middle of the night :-) OSX specific.
+        os.system('say "Benchmark has finished executing." -v Samantha')
