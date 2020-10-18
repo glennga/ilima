@@ -1,17 +1,33 @@
 import __init__
 import logging
+import json
 
 from src.asterixdb.equality_predicate_query.executor import AbstractEqualityPredicateQuery
+from src.datagen.shopalot import AbstractOrdersDatagen
 
 logger = logging.getLogger(__name__)
 
 
 class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
     def __init__(self):
-        super().__init__(index_names=['ordersItemQtyIdx', 'ordersItemProductIdx'], dataset_name='Orders')
+        with open('config/shopalot.json') as config_file:
+            config_json = json.load(config_file)  # Determine how large our dataset size is.
+            logger.info(f'Using the ShopALot config file: {config_json}')
+
+        super().__init__(**{
+            'dataset_size': config_json['orders']['idRange']['end'] - config_json['orders']['idRange']['start'],
+            'user_start_id': config_json['users']['idRange']['start'],
+            'user_end_id': config_json['users']['idRange']['end'],
+            'store_start_id': config_json['stores']['idRange']['start'],
+            'store_end_id': config_json['stores']['idRange']['end'],
+            'chunk_size': config_json['orders']['chunkSize'],
+            'datagen_class': AbstractOrdersDatagen,
+            'index_names': ['ordersItemQtyIdx', 'ordersItemProductIdx'],
+            'dataset_name': 'Orders'
+        })
 
     def benchmark_atom(self, working_sample_objects, atom_num):
-        if not self._enable_index_only(atom_num == 1):
+        if not self.enable_index_only(atom_num == 1):
             return False
 
         for i, sample_order in enumerate(working_sample_objects):
@@ -83,4 +99,4 @@ class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
 
 if __name__ == '__main__':
-    OrdersEqualityPredicateQuery()()
+    OrdersEqualityPredicateQuery().invoke()

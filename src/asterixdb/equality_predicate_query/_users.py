@@ -1,17 +1,29 @@
 import __init__
 import logging
+import json
 
 from src.asterixdb.equality_predicate_query.executor import AbstractEqualityPredicateQuery
+from src.datagen.shopalot import AbstractUsersDatagen
 
 logger = logging.getLogger(__name__)
 
 
 class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
     def __init__(self):
-        super().__init__(index_names=['usersNumberIdx'], dataset_name='Users')
+        with open('config/shopalot.json') as config_file:
+            config_json = json.load(config_file)  # Determine how large our dataset size is.
+            logger.info(f'Using the ShopALot config file: {config_json}')
+
+        super().__init__(**{
+            'dataset_size': config_json['users']['idRange']['end'] - config_json['users']['idRange']['start'],
+            'chunk_size': config_json['users']['chunkSize'],
+            'datagen_class': AbstractUsersDatagen,
+            'index_names': ['usersNumberIdx'],
+            'dataset_name': 'Users'
+        })
 
     def benchmark_atom(self, working_sample_objects, atom_num):
-        if not self._enable_index_only(atom_num == 1):
+        if not self.enable_index_only(atom_num == 1):
             return False
 
         for i, sample_user in enumerate(working_sample_objects):
@@ -74,4 +86,4 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
 
 
 if __name__ == '__main__':
-    UsersEqualityPredicateQuery()()
+    UsersEqualityPredicateQuery().invoke()
