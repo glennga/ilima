@@ -3,26 +3,50 @@ import decimal
 import random
 import faker
 import json
-import numpy
 import argparse
 import abc
 
 
+class PrimaryKeyGeneratorFactory:
+    @staticmethod
+    def provide_range_generator(start_id, end_id):
+        def _range_based_pk_generator():
+            working_primary_key = start_id
+            while working_primary_key < end_id:
+                yield working_primary_key
+                working_primary_key = working_primary_key + 1
+
+        return _range_based_pk_generator
+
+    @staticmethod
+    def provide_rand_range_generator(start_id, end_id, dataset_size):
+        # Note this is all in memory! No large ranges!
+        def _random_range_based_pk_generator():
+            for pk in random.sample(range(start_id, end_id), dataset_size):
+                yield pk
+
+        return _random_range_based_pk_generator
+
+
 class _AbstractShopALotDatagen(abc.ABC):
     def __init__(self, **kwargs):
-        random_seed = datetime.datetime.now()
-        faker.Faker.seed(random_seed)
-        random.seed(random_seed)
         self.faker_datagen = faker.Faker()
+        self.primary_key_generator = kwargs['primary_key_generator']
 
-        self.start_id = kwargs['start_id']
-        self.end_id = kwargs['end_id']
+        self.dataset_size = kwargs['dataset_size']
         self.chunk_size = kwargs['chunk_size']
         self.primary_key = kwargs['primary_key']
-        self.pk_zfill = len(str(self.end_id))
+        self.pk_zfill = kwargs['pk_zfill']
+
+    def format_key(self, text):
+        return str(text).zfill(self.pk_zfill)
+
+    @classmethod
+    def chunk_id_mapper(cls, pk, chunk_size):
+        return pk % chunk_size
 
     @abc.abstractmethod
-    def atom_generator(self):
+    def atom_mapper(self, pk):
         pass
 
     @abc.abstractmethod
@@ -36,33 +60,17 @@ class _AbstractShopALotDatagen(abc.ABC):
     def close_resources(self):
         pass
 
-    def _chunk_id_generator(self):
-        working_chunk_id = self.start_id
-        while True:
-            yield str(working_chunk_id).zfill(self.pk_zfill)
-            if working_chunk_id < self.chunk_size - 1:
-                working_chunk_id = working_chunk_id + 1
-            else:
-                working_chunk_id = self.start_id
+    def invoke(self):
+        primary_key_iter = self.primary_key_generator()
+        for pk in primary_key_iter:
+            # We ensure that one PK always maps to a a single, unique record.
+            random.seed(pk)
+            faker.Faker.seed(pk)
 
-    def _primary_key_generator(self):
-        working_primary_key = self.start_id
-        while working_primary_key < self.end_id:
-            yield str(working_primary_key).zfill(self.pk_zfill)
-            working_primary_key = working_primary_key + 1
+            # First, create the ATOM JSON.
+            atom_json = self.atom_mapper(pk)
 
-    def __call__(self, *args, **kwargs):
-        chunk_id_iter = self._chunk_id_generator()
-        primary_key_iter = self._primary_key_generator()
-        atom_json_iter = self.atom_generator()
-
-        for _ in range(self.start_id, self.end_id):
-            # First, generate the ATOM JSON.
-            atom_json = next(atom_json_iter)
-            atom_json[self.primary_key] = next(primary_key_iter)
-            atom_json['chunk_id'] = next(chunk_id_iter)
-
-            # Next generate the SARR JSON from the ATOM JSON.
+            # Next create the SARR JSON from the ATOM JSON.
             sarr_json = self.sarr_mapper(atom_json)
 
             # Finally, consume the JSON.
@@ -77,19 +85,20 @@ class AbstractUsersDatagen(_AbstractShopALotDatagen, abc.ABC):
     def __init__(self, **kwargs):
         super().__init__(primary_key='user_id', **kwargs)
 
-    def atom_generator(self):
-        for _ in range(self.start_id, self.end_id):
-            user_phone = {
-                "type": random.choice(self.PHONE_TYPES),
-                "number": self.faker_datagen.phone_number()
-            }
-            yield {
-                "name": {
-                    "first": self.faker_datagen.first_name(),
-                    "last": self.faker_datagen.last_name()
-                },
-                "phone": user_phone
-            }
+    def atom_mapper(self, pk):
+        user_phone = {
+            "type": random.choice(self.PHONE_TYPES),
+            "number": self.faker_datagen.phone_number()
+        }
+        return {
+            "user_id": self.format_key(pk),
+            "chunk_id": self.format_key(self.chunk_id_mapper(pk, self.chunk_size)),
+            "name": {
+                "first": self.faker_datagen.first_name(),
+                "last": self.faker_datagen.last_name()
+            },
+            "phone": user_phone
+        }
 
     def sarr_mapper(self, atom_json):
         sarr_json = dict(atom_json)
@@ -121,21 +130,21 @@ class AbstractStoresDatagen(_AbstractShopALotDatagen, abc.ABC):
     def __init__(self, **kwargs):
         super().__init__(primary_key='store_id', **kwargs)
 
-    def atom_generator(self):
-        for _ in range(self.start_id, self.end_id):
-            store_name = random.choice(self.STORE_NAMES)
-            store_category = random.choice(self.PRODUCT_CATEGORIES)
-            store = {
-                "name": store_name,
-                "address": {
-                    "city": self.faker_datagen.city(),
-                    "street": self.faker_datagen.street_address(),
-                    "zip_code": self.faker_datagen.postcode()[:5].lstrip('0'),
-                },
-                "phone": self.faker_datagen.phone_number(),
-                "category": store_category
-            }
-            yield store
+    def atom_mapper(self, pk):
+        store_name = random.choice(self.STORE_NAMES)
+        store_category = random.choice(self.PRODUCT_CATEGORIES)
+        return {
+            "store_id": self.format_key(pk),
+            "chunk_id": self.format_key(self.chunk_id_mapper(pk, self.chunk_size)),
+            "name": store_name,
+            "address": {
+                "city": self.faker_datagen.city(),
+                "street": self.faker_datagen.street_address(),
+                "zip_code": self.faker_datagen.postcode()[:5].lstrip('0'),
+            },
+            "phone": self.faker_datagen.phone_number(),
+            "category": store_category
+        }
 
     def sarr_mapper(self, atom_json):
         sarr_json = dict(atom_json)
@@ -163,37 +172,37 @@ class AbstractOrdersDatagen(_AbstractShopALotDatagen, abc.ABC):
         self.store_id_end = kwargs['store_end_id']
         self.store_id_zfill = len(str(self.store_id_end))
 
+        self.product_iter = self._product_generator()
         super().__init__(primary_key='order_id', **kwargs)
 
-    def atom_generator(self):
-        product_iter = self._product_generator()
+    def atom_mapper(self, pk):
+        product = next(self.product_iter)
+        price = max(float(product['list_price']) + (float(product['list_price']) * random.random()) -
+                    (float(product['list_price']) / 2.0), 0.99)
+        order_item = {
+            "item_id": self.faker_datagen.uuid4(),
+            "qty": int(abs(random.normalvariate(1, 10))),
+            "price": float(decimal.Decimal(price).quantize(decimal.Decimal('0.01'), decimal.ROUND_HALF_UP)),
+            "product_id": product['product_id']
+        }
 
-        for _ in range(self.start_id, self.end_id):
-            product = next(product_iter)
-            price = max(float(product['list_price']) + (float(product['list_price']) * random.random()) -
-                        (float(product['list_price']) / 2.0), 0.99)
-            order_item = {
-                "item_id": self.faker_datagen.uuid4(),
-                "qty": int(abs(numpy.random.normal(1, 10))),
-                "price": float(decimal.Decimal(price).quantize(decimal.Decimal('0.01'), decimal.ROUND_HALF_UP)),
-                "product_id": product['product_id']
-            }
+        time_placed = self.faker_datagen.date_time_this_month()
+        pickup_time = self.faker_datagen.date_time_between_dates(
+            datetime_start=time_placed, datetime_end=time_placed + datetime.timedelta(hours=6))
+        date_fulfilled_field = str(self.faker_datagen.date_time_between_dates(
+            datetime_start=pickup_time, datetime_end=pickup_time + datetime.timedelta(hours=6)))
+        user_id = str(random.randint(self.user_id_start, self.user_id_end)).zfill(self.user_id_zfill)
+        store_id = str(random.randint(self.store_id_start, self.store_id_end)).zfill(self.store_id_zfill)
 
-            time_placed = self.faker_datagen.date_time_this_month()
-            pickup_time = self.faker_datagen.date_time_between_dates(
-                datetime_start=time_placed, datetime_end=time_placed + datetime.timedelta(hours=6))
-            date_fulfilled_field = str(self.faker_datagen.date_time_between_dates(
-                datetime_start=pickup_time, datetime_end=pickup_time + datetime.timedelta(hours=6)))
-            user_id = str(random.randint(self.user_id_start, self.user_id_end)).zfill(self.user_id_zfill)
-            store_id = str(random.randint(self.store_id_start, self.store_id_end)).zfill(self.store_id_zfill)
-
-            yield {
-                "time_placed": str(time_placed),
-                "time_fulfilled": str(date_fulfilled_field),
-                "user_id": user_id,
-                "store_id": store_id,
-                "item": order_item
-            }
+        return {
+            "order_id": self.format_key(pk),
+            "chunk_id": self.format_key(self.chunk_id_mapper(pk, self.chunk_size)),
+            "time_placed": str(time_placed),
+            "time_fulfilled": str(date_fulfilled_field),
+            "user_id": user_id,
+            "store_id": store_id,
+            "item": order_item
+        }
 
     def sarr_mapper(self, atom_json):
         sarr_json = dict(atom_json)
@@ -201,6 +210,74 @@ class AbstractOrdersDatagen(_AbstractShopALotDatagen, abc.ABC):
         sarr_json['items'] = [atom_json['item']]
         del sarr_json['item']
         return sarr_json
+
+
+class DatagenAbstractFactoryProvider:
+    @staticmethod
+    def provide_memory_abstract_factory(datagen_class: _AbstractShopALotDatagen):
+        class _ForMemoryDatagen(datagen_class):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.atom_json, self.sarr_json = [], []
+
+            def json_consumer(self, atom_json, sarr_json):
+                self.atom_json.append(atom_json)
+                self.sarr_json.append(sarr_json)
+
+            def reset_generation(self, primary_key_generator):
+                self.primary_key_generator = primary_key_generator
+                self.atom_json = []
+                self.sarr_json = []
+
+        return _ForMemoryDatagen
+
+    @staticmethod
+    def provide_disk_abstract_factory(datagen_class: _AbstractShopALotDatagen):
+        class _ToFileDatagen(datagen_class):
+            def __init__(self, **kwargs):
+                config = {
+                    'chunk_size': kwargs['chunkSize'],
+                    'dataset_size': kwargs['idRange']['end'] - kwargs['idRange']['start'],
+                    'pk_zfill': len(str(kwargs['idRange']['end'])),
+                    'user_start_id': main_config_json['users']['idRange']['start'],
+                    'user_end_id': main_config_json['users']['idRange']['end'],
+                    'store_start_id': main_config_json['stores']['idRange']['start'],
+                    'store_end_id': main_config_json['stores']['idRange']['end']
+                }
+                primary_key_generator = PrimaryKeyGeneratorFactory.\
+                    provide_range_generator(kwargs['idRange']['start'], kwargs['idRange']['end'])
+                super().__init__(primary_key_generator=primary_key_generator, **config)
+
+                self.atom_fps = {
+                    'full': open(kwargs['atomDataverse']['fullFilename'], 'w'),
+                    'eighth': open(kwargs['atomDataverse']['eighthFilename'], 'w')
+                }
+                self.sarr_fps = {
+                    'full': open(kwargs['sarrDataverse']['fullFilename'], 'w'),
+                    'eighth': open(kwargs['sarrDataverse']['eighthFilename'], 'w')
+                }
+
+                self.datagen_counter = kwargs['idRange']['start']
+
+            @staticmethod
+            def _write_to_file(out_fp, out_json):
+                json.dump(out_json, out_fp)
+                out_fp.write('\n')
+
+            def json_consumer(self, atom_json, sarr_json):
+                if self.datagen_counter % 8 == 0:
+                    self._write_to_file(self.atom_fps['eighth'], atom_json)
+                    self._write_to_file(self.sarr_fps['eighth'], sarr_json)
+
+                self._write_to_file(self.atom_fps['full'], atom_json)
+                self._write_to_file(self.sarr_fps['full'], sarr_json)
+                self.datagen_counter = self.datagen_counter + 1
+
+            def close_resources(self):
+                [fp.close() for fp in self.atom_fps.values()]
+                [fp.close() for fp in self.sarr_fps.values()]
+
+        return _ToFileDatagen
 
 
 if __name__ == '__main__':
@@ -214,61 +291,12 @@ if __name__ == '__main__':
     # Determine our parent class, based on the given dataset.
     if command_line_args.dataset == 'user':
         datagen_parent = AbstractUsersDatagen
-    elif command_line_args == 'store':
+    elif command_line_args.dataset == 'store':
         datagen_parent = AbstractStoresDatagen
     else:
         datagen_parent = AbstractOrdersDatagen
 
-
-    class ToFileDatagen(datagen_parent):
-        def __init__(self, **kwargs):
-            config = {
-                'start_id': kwargs['idRange']['start'],
-                'end_id': kwargs['idRange']['end'],
-                'chunk_size': kwargs['chunkSize'],
-                'user_start_id': main_config_json['users']['idRange']['start'],
-                'user_end_id': main_config_json['users']['idRange']['end'],
-                'store_start_id': main_config_json['stores']['idRange']['start'],
-                'store_end_id': main_config_json['stores']['idRange']['end']
-            }
-            super().__init__(**config)
-
-            self.atom_fps = {
-                'full': open(kwargs['atomDataverse']['fullFilename'], 'w'),
-                'eighth': open(kwargs['atomDataverse']['eighthFilename'], 'w'),
-                'sample': open(kwargs['atomDataverse']['sampleFilename'], 'w')
-            }
-            self.sarr_fps = {
-                'full': open(kwargs['sarrDataverse']['fullFilename'], 'w'),
-                'eighth': open(kwargs['sarrDataverse']['eighthFilename'], 'w'),
-                'sample': open(kwargs['sarrDataverse']['sampleFilename'], 'w')
-            }
-
-            self.sample_set = set(random.sample(range(self.start_id, self.end_id), config['user']['sampleSize']))
-            self.datagen_counter = kwargs['idRange']['start']
-
-        @staticmethod
-        def _write_to_file(out_fp, out_json):
-            json.dump(out_json, out_fp)
-            out_fp.write('\n')
-
-        def json_consumer(self, atom_json, sarr_json):
-            if self.datagen_counter % 8 == 0:
-                self._write_to_file(self.atom_fps['eighth'], atom_json)
-                self._write_to_file(self.sarr_fps['eighth'], sarr_json)
-
-            if self.datagen_counter in self.sample_set:
-                self._write_to_file(self.atom_fps['sample'], atom_json)
-                self._write_to_file(self.sarr_fps['sample'], sarr_json)
-
-            self._write_to_file(self.atom_fps['full'], atom_json)
-            self._write_to_file(self.sarr_fps['full'], sarr_json)
-            self.datagen_counter = self.datagen_counter + 1
-
-        def close_resources(self):
-            [fp.close() for fp in self.atom_fps.values()]
-            [fp.close() for fp in self.sarr_fps.values()]
-
-
     # Invoke our datagen.
-    ToFileDatagen(**(main_config_json[command_line_args.dataset + 's']))()
+    datagen_factory = DatagenAbstractFactoryProvider.provide_disk_abstract_factory(datagen_parent)
+    datagen_instance = datagen_factory(**(main_config_json[command_line_args.dataset + 's']))
+    datagen_instance.invoke()
