@@ -32,7 +32,6 @@ class _AbstractShopALotDatagen(abc.ABC):
     def __init__(self, **kwargs):
         self.faker_datagen = faker.Faker()
         self.primary_key_generator = kwargs['primary_key_generator']
-
         self.dataset_size = kwargs['dataset_size']
         self.chunk_size = kwargs['chunk_size']
         self.primary_key = kwargs['primary_key']
