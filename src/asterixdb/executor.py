@@ -64,11 +64,13 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self.dataverse = self.config['dataverse']
 
         # Setup our benchmarking outputs (to analysis cluster, to file).
-        self.results_dir = self._generate_results_dir()
-        self.results_fp = open(self.results_dir + '/' + 'results.json', 'w')
-        self.results_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.results_socket.connect((self.config['analysisCluster']['nodeController']['address'],
-                                     self.config['analysisCluster']['feedSocketPort']))
+        if self.config['results']['isFile']:
+            self.results_dir = self._generate_results_dir()
+            self.results_fp = open(self.results_dir + '/' + 'results.json', 'w')
+        if self.config['results']['isSocket']:
+            self.results_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.results_socket.connect((self.config['analysisCluster']['nodeController']['address'],
+                                         self.config['analysisCluster']['feedSocketPort']))
 
     def do_indexes_exist(self, index_names, dataset_name):
         for index_name in index_names:
@@ -106,25 +108,27 @@ class AbstractBenchmarkRunnable(abc.ABC):
         results['dataverse'] = self.dataverse
         results['configJSON'] = self.config
 
-        # To the results file..
-        logger.debug('Recording result to disk.')
-        json.dump(results, self.results_fp)
-        self.results_fp.write('\n')
+        # To the results file.
+        if self.config['results']['isFile']:
+            logger.debug('Recording result to disk.')
+            json.dump(results, self.results_fp)
+            self.results_fp.write('\n')
 
         # To the analysis cluster. We must provide our own key.
-        results['id'] = str(uuid.uuid4())
-        logger.debug('Recording result to cluster through feed.')
-        if not self.results_socket.sendall(json.dumps(results).encode('ascii')) is None:
-            logger.warning('Analysis cluster did not accept record!')
-        else:
-            logger.info('Result successfully sent to cluster.')
+        if self.config['results']['isSocket']:
+            results['id'] = str(uuid.uuid4())
+            logger.debug('Recording result to cluster through feed.')
+            if not self.results_socket.sendall(json.dumps(results).encode('ascii')) is None:
+                logger.warning('Analysis cluster did not accept record!')
+            else:
+                logger.info('Result successfully sent to cluster.')
 
     def execute_sqlpp(self, statement):
         lean_statement = ' '.join(statement.split())
         query_parameters = {
             'statement': lean_statement,
             'plan-format': 'STRING',
-            'profile': 'timings',
+            # 'profile': 'timings',
             'rewritten-expression-tree': True,
             'optimized-logical-plan': True,
             'expression-tree': True,
@@ -146,18 +150,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
         response_json['statement'] = lean_statement
         return response_json
 
-    @abc.abstractmethod
-    def perform_benchmark(self):
-        pass
-
-    def perform_post(self):
-        pass
-
-    def invoke(self):
-        logger.info(f'Working with execution id: {self.execution_id}.')
-        logger.info(f'Specified dataverse is: {self.dataverse}.')
-
-        # Restart the cluster. For queries, this minimizes the chance that we access a cached page.
+    def restart_cluster(self):
         logger.info('Running STOP command.')
         self._call_subprocess(self.config['benchmark']['stopCommand'])
         logger.info('Running START command.')
@@ -180,6 +173,20 @@ class AbstractBenchmarkRunnable(abc.ABC):
             except requests.exceptions.ConnectionError:
                 logger.info('Connection refused, trying again in 5 seconds...')
 
+    @abc.abstractmethod
+    def perform_benchmark(self):
+        pass
+
+    def perform_post(self):
+        pass
+
+    def invoke(self):
+        logger.info(f'Working with execution id: {self.execution_id}.')
+        logger.info(f'Specified dataverse is: {self.dataverse}.')
+
+        # Restart the cluster. For queries, this minimizes the chance that we access a cached page.
+        self.restart_cluster()
+
         # Perform the benchmark.
         logger.debug('Executing the benchmark.')
         self.perform_benchmark()
@@ -190,9 +197,12 @@ class AbstractBenchmarkRunnable(abc.ABC):
         self._call_subprocess([self.config['benchmark']['postCommand'], self.results_dir])
 
         self.perform_post()
-        self.results_fp.close()
-        self.results_socket.close()
+
+        if self.config['results']['isFile']:
+            self.results_fp.close()
+        if self.config['results']['isSocket']:
+            self.results_socket.close()
         logger.info('Benchmark has finished executing.')
 
         # Scare me in the middle of the night :-) OSX specific.
-        os.system('say "Benchmark has finished executing." -v Samantha')
+        os.system('say "[[volm 0.03]] Benchmark has finished executing." -v Samantha')
