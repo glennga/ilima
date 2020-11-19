@@ -21,5 +21,9 @@
       "dataverse": "BenchmarkAnalysis",
       "dataset": "ResultsDataset"
     }
+  },
+  "results": {
+    "isSocket": false,
+    "isFile": true
   }
 }

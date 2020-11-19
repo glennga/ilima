@@ -1,56 +1,47 @@
 {
   "users": {
     "atomDataverse": {
-      "fullFilename": "resources/full_data/ATOM-UsersFull.json",
-      "eighthFilename": "resources/full_data/ATOM-UsersEighth.json",
-      "sampleFilename": "resources/sample_data/ATOM-UsersSample.json"
+      "fullFilename": "resources/ATOM-UsersFull.json",
+      "eighthFilename": "resources/ATOM-UsersEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/full_data/SARR-UsersFull.json",
-      "eighthFilename": "resources/full_data/SARR-UsersEighth.json",
-      "sampleFilename": "resources/sample_data/SARR-UsersSample.json"
+      "fullFilename": "resources/SARR-UsersFull.json",
+      "eighthFilename": "resources/SARR-UsersEighth.json"
     },
     "idRange": {
       "start": 0,
-      "end": 200000000
+      "end": 100000000
     },
-    "chunkSize": 1000,
-    "sampleSize": 12000
+    "chunkSize": 10000
   },
   "stores": {
     "atomDataverse": {
-      "fullFilename": "resources/full_data/ATOM-StoresFull.json",
-      "eighthFilename": "resources/full_data/ATOM-StoresEighth.json",
-      "sampleFilename": "resources/sample_data/ATOM-StoresSample.json"
+      "fullFilename": "resources/ATOM-StoresFull.json",
+      "eighthFilename": "resources/ATOM-StoresEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/full_data/SARR-StoresFull.json",
-      "eighthFilename": "resources/full_data/SARR-StoresEighth.json",
-      "sampleFilename": "resources/sample_data/SARR-StoresSample.json"
+      "fullFilename": "resources/SARR-StoresFull.json",
+      "eighthFilename": "resources/SARR-StoresEighth.json"
     },
     "idRange": {
       "start": 0,
-      "end": 10000
+      "end": 100000000
     },
-    "chunkSize": 1000,
-    "sampleSize": 12000
+    "chunkSize": 10000
   },
   "orders": {
     "atomDataverse": {
-      "fullFilename": "resources/full_data/ATOM-OrdersFull.json",
-      "eighthFilename": "resources/full_data/ATOM-OrdersEighth.json",
-      "sampleFilename": "resources/sample_data/ATOM-OrdersSample.json"
+      "fullFilename": "resources/ATOM-OrdersFull.json",
+      "eighthFilename": "resources/ATOM-OrdersEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/full_data/SARR-OrdersFull.json",
-      "eighthFilename": "resources/full_data/SARR-OrdersEighth.json",
-      "sampleFilename": "resources/sample_data/SARR-OrdersSample.json"
+      "fullFilename": "resources/SARR-OrdersFull.json",
+      "eighthFilename": "resources/SARR-OrdersEighth.json"
     },
     "idRange": {
       "start": 0,
-      "end": 10000
+      "end": 100000000
     },
-    "chunkSize": 1000,
-    "sampleSize": 12000
+    "chunkSize": 10000
   }
 }
