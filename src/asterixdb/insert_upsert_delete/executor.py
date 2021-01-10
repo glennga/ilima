@@ -168,7 +168,7 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
 
     def perform_benchmark(self):
         if not self.do_indexes_exist(self.index_names, self.dataset_name):
-            return
+            logger.warning(f'Indexes not found. Assuming that this is benchmarking non-indexed operations.')
 
         logger.info(f'Executing insert_upsert_delete on {self.dataset_name} for {self.dataverse.upper()}.')
         logger.info(f'Running benchmark for {self.dataverse.upper()} inserts.')
