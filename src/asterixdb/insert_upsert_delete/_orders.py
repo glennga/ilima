@@ -23,12 +23,16 @@ class OrdersInsertUpsertDelete(AbstractInsertUpsertDelete):
             'insert_epoch': int((dataset_size * increment_size) / chunk_size),
             'upsert_epoch': int((dataset_size * increment_size) / chunk_size),
             'delete_epoch': int((dataset_size * decrement_size) / chunk_size),
-            'datagen_class': OrdersInsertUpsertDelete,
+            'datagen_class': AbstractOrdersDatagen,
             'dataset_size': dataset_size,
             'chunk_size': chunk_size,
-            'index_names': ['ordersItemQtyIdx', 'ordersItemProductIdx'],
+            'index_names': ['ordersItemQtyProductIdx', 'ordersProductItemQtyIdx'],
             'dataset_name': 'Orders',
-            'primary_key': 'order_id'
+            'primary_key': 'order_id',
+            'user_start_id': config_json['users']['idRange']['start'],
+            'user_end_id': config_json['users']['idRange']['end'],
+            'store_start_id': config_json['stores']['idRange']['start'],
+            'store_end_id': config_json['stores']['idRange']['end']
         })
 
 

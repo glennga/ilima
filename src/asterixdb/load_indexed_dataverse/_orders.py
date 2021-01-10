@@ -30,8 +30,8 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : string ?);
-            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string ?);
+            CREATE INDEX ordersItemQtyProductIdx ON Orders(UNNEST items SELECT qty : int ?, product_id : string ?);
+            CREATE INDEX ordersProductItemQtyIdx ON Orders(UNNEST items SELECT product_id : string ?, qty : int ?);
         """ % self.SARR_PATH)
         self.log_results(results)
 
@@ -48,8 +48,8 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
                 ("path"="%s"), ("format"="json")
             );
             
-            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty : string ?);
-            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id : string ?);
+            CREATE INDEX ordersItemQtyProductIdx ON Orders(item.qty : int ?, item.product_id : string ?);
+            CREATE INDEX ordersProductItemQtyIdx ON Orders(item.product_id : string ?, item.qty : int ?);
         """ % self.ATOM_PATH)
         self.log_results(results)
 
