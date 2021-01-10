@@ -22,8 +22,9 @@ class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             'store_end_id': config_json['stores']['idRange']['end'],
             'chunk_size': config_json['orders']['chunkSize'],
             'datagen_class': AbstractOrdersDatagen,
-            'index_names': ['ordersItemQtyIdx', 'ordersItemProductIdx'],
-            'dataset_name': 'Orders'
+            'index_names': ['ordersItemQtyProductIdx', 'ordersProductItemQtyIdx'],
+            'dataset_name': 'Orders',
+            'num_queries': 500
         })
 
     def benchmark_atom(self, working_sample_objects, atom_num):
@@ -60,7 +61,8 @@ class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
                     FROM ShopALot.SARR.Orders O
                     UNNEST O.items OI
                     WHERE OI.qty = {sample_order_qty} AND 
-                          OI.product_id = "{sample_order_product}";
+                          OI.product_id = "{sample_order_product}"
+                    LIMIT 10;
                 """)
             elif sarr_num == 2:
                 results = self.execute_sqlpp(f"""
@@ -68,14 +70,16 @@ class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
                     FROM ShopALot.SARR.Orders O
                     UNNEST O.items OI
                     WHERE OI.qty = {sample_order_qty} AND 
-                          OI.product_id = "{sample_order_product}";
+                          OI.product_id = "{sample_order_product}"
+                    LIMIT 10;
                 """)
             elif sarr_num == 3:
                 results = self.execute_sqlpp(f"""
                     SELECT O    
                     FROM ShopALot.SARR.Orders O
                     WHERE (SOME OI IN O.items SATISFIES OI.qty = {sample_order_qty} AND 
-                           OI.product_id = "{sample_order_product}");
+                           OI.product_id = "{sample_order_product}")
+                    LIMIT 10;
                 """)
             else:
                 results = self.execute_sqlpp(f"""
@@ -83,7 +87,8 @@ class OrdersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
                     FROM ShopALot.SARR.Orders O
                     WHERE LEN(O.items) > 0 AND 
                           (EVERY OI IN O.items SATISFIES OI.qty = {sample_order_qty} AND 
-                           OI.product_id = "{sample_order_product}");
+                           OI.product_id = "{sample_order_product}")
+                    LIMIT 10;
                 """)
 
             if len(results['results']) == 0:

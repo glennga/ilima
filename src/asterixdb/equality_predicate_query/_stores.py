@@ -19,7 +19,8 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             'chunk_size': config_json['stores']['chunkSize'],
             'datagen_class': AbstractStoresDatagen,
             'index_names': ['storesCatIdx'],
-            'dataset_name': 'Stores'
+            'dataset_name': 'Stores',
+            'num_queries': 40
         })
 
     def benchmark_atom(self, working_sample_objects, atom_num):
@@ -31,15 +32,14 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             results = self.execute_sqlpp(f"""
                  SELECT S
                  FROM ShopALot.ATOM.Stores S
-                 WHERE S.category = "{sample_category}";
+                 WHERE S.category = "{sample_category}"
+                 LIMIT 10;
              """)
             if len(results['results']) == 0:
                 logger.error(f'Query {i + 1} was not successful! "{sample_category}" not found.')
                 return False
 
             logger.debug(f'Query {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
-            results['results'] = results['results'][:10]  # This is high-selectivity query, do not save all results.
-            results['areResultsTruncated'] = True
             results['runNumber'] = i + 1
             self.log_results(results)
 
@@ -53,27 +53,31 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
                     SELECT S
                     FROM ShopALot.SARR.Stores S
                     UNNEST S.categories SC 
-                    WHERE SC = "{sample_category}";
+                    WHERE SC = "{sample_category}"
+                    LIMIT 10;
                 """)
             elif sarr_num == 2:
                 results = self.execute_sqlpp(f"""
                     SELECT DISTINCT S
                     FROM ShopALot.SARR.Stores S
                     UNNEST S.categories SC 
-                    WHERE SC = "{sample_category}";
+                    WHERE SC = "{sample_category}"
+                    LIMIT 10;
                 """)
             elif sarr_num == 3:
                 results = self.execute_sqlpp(f"""
                     SELECT S
                     FROM ShopALot.SARR.Stores S
-                    WHERE "{sample_category}" IN S.categories;
+                    WHERE "{sample_category}" IN S.categories
+                    LIMIT 10;
                 """)
             else:
                 results = self.execute_sqlpp(f"""
                     SELECT S
                     FROM ShopALot.SARR.Stores S
                     WHERE LEN(S.categories) > 0 AND
-                         (EVERY SC IN S.categories SATISFIES SC = "{sample_category}");
+                         (EVERY SC IN S.categories SATISFIES SC = "{sample_category}")
+                    LIMIT 10;
                 """)
 
             if len(results['results']) == 0:
@@ -81,8 +85,6 @@ class StoresEqualityPredicateQuery(AbstractEqualityPredicateQuery):
                 return False
 
             logger.debug(f'Query {i + 1} was successful. Execution time: {results["metrics"]["elapsedTime"]}')
-            results['results'] = results['results'][:10]  # This is high-selectivity query, do not save all results.
-            results['areResultsTruncated'] = True
             results['runNumber'] = i + 1
             self.log_results(results)
 

@@ -10,12 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
-    NUMBER_OF_QUERIES_TO_EXECUTE = 500
-
     def __init__(self, **kwargs):
         self.index_names = kwargs['index_names']
         self.dataset_name = kwargs['dataset_name']
         self.dataset_size = kwargs['dataset_size']
+        self.num_queries = kwargs['num_queries']
         self.chunk_size = kwargs['chunk_size']
         super().__init__()
 
@@ -44,7 +43,7 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
 
     def get_sample_data(self, dataverse):
         primary_key_generator = PrimaryKeyGeneratorFactory.\
-            provide_rand_range_generator(0, self.dataset_size, self.NUMBER_OF_QUERIES_TO_EXECUTE)
+            provide_rand_range_generator(0, self.dataset_size, self.num_queries)
         self.datagen.reset_generation(primary_key_generator)
         self.datagen.invoke()
 
@@ -55,15 +54,15 @@ class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
 
     def perform_benchmark(self):
         if not self.do_indexes_exist(self.index_names, self.dataset_name):
-            return
+            logger.warning(f'Indexes not found. Assuming that this is benchmarking non-indexed operations.')
 
         if self.dataverse == self.ATOM_DATAVERSE:
             logger.info(f'Executing equality_predicate_query on {self.dataset_name} for ATOM.')
-            logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {str(self.index_names)}, not index-only.')
+            logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {str(self.index_names)}, index-only.')
             if not self.benchmark_atom(self.get_sample_data(self.dataverse), atom_num=1):
                 return
 
-            logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {str(self.index_names)}, index-only.')
+            logger.info(f'Running benchmark for: ATOM, {self.dataset_name}, {str(self.index_names)}, not index-only.')
             if not self.benchmark_atom(self.get_sample_data(self.dataverse), atom_num=2):
                 return
 

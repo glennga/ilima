@@ -19,7 +19,8 @@ class UsersEqualityPredicateQuery(AbstractEqualityPredicateQuery):
             'chunk_size': config_json['users']['chunkSize'],
             'datagen_class': AbstractUsersDatagen,
             'index_names': ['usersNumberIdx'],
-            'dataset_name': 'Users'
+            'dataset_name': 'Users',
+            'num_queries': 500
         })
 
     def benchmark_atom(self, working_sample_objects, atom_num):
