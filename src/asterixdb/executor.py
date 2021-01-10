@@ -203,6 +203,3 @@ class AbstractBenchmarkRunnable(abc.ABC):
         if self.config['results']['isSocket']:
             self.results_socket.close()
         logger.info('Benchmark has finished executing.')
-
-        # Scare me in the middle of the night :-) OSX specific.
-        os.system('say "[[volm 0.03]] Benchmark has finished executing." -v Samantha')
