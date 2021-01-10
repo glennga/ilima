@@ -5,8 +5,6 @@
 /resources/*
 
 # Tools that are specific to my system.
-/tools/asterixdb/
-/tools/asterixdb/post_command.sh
-/tools/asterixdb/start_command.sh
-/tools/asterixdb/stop_command.sh
 /tools/download_results.sh
+/tools/config_sink.py
+/tools/asterixdb/*
