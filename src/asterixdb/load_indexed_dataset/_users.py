@@ -11,8 +11,8 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
     # SARR_PATH = PATH_PREFIX + "SARR-UsersSample.json"
     # ATOM_PATH = PATH_PREFIX + "ATOM-UsersSample.json"
     PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-UsersEighth.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-UsersEighth.json"
+    SARR_PATH = PATH_PREFIX + "SARR-UsersFull.json"
+    ATOM_PATH = PATH_PREFIX + "ATOM-UsersFull.json"
 
     def __init__(self):
         super().__init__(sarr_type_ddl="CREATE TYPE UsersType AS { user_id: string };",

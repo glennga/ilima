@@ -11,8 +11,8 @@ class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
     # SARR_PATH = PATH_PREFIX + "SARR-OrdersSample.json"
     # ATOM_PATH = PATH_PREFIX + "ATOM-OrdersSample.json"
     PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-OrdersEighth.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-OrdersEighth.json"
+    SARR_PATH = PATH_PREFIX + "SARR-OrdersFull.json"
+    ATOM_PATH = PATH_PREFIX + "ATOM-OrdersFull.json"
 
     def __init__(self):
         super().__init__(sarr_type_ddl="CREATE TYPE OrdersType AS { order_id: string };",
