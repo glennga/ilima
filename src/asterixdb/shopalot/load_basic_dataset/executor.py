@@ -2,12 +2,12 @@ import __init__
 import logging
 import abc
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
+from src.asterixdb.shopalot.executor import AbstractShopALotRunnable
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
+class AbstractLoadBasicDataset(AbstractShopALotRunnable, abc.ABC):
     NUMBER_OF_REPEATS = 3
 
     def __init__(self, **kwargs):
@@ -25,7 +25,7 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
 
     def perform_benchmark(self):
         if self.dataverse == self.SARR_DATAVERSE:
-            logger.info('Executing load_indexed_dataset on Users for SARR.')
+            logger.info('Executing load_basic_dataset on Users for SARR.')
             logger.info('Starting Algebricks-layer bulk loading for SARR.')
             logger.info('Creating empty dataverse for SARR.')
             results = self.execute_sqlpp(f"""
@@ -43,7 +43,7 @@ class AbstractLoadIndexedDataset(AbstractBenchmarkRunnable, abc.ABC):
                 if not self.benchmark_sarr(i):
                     return
         else:
-            logger.info('Executing load_indexed_dataset on Users for ATOM.')
+            logger.info('Executing load_basic_dataset on Users for ATOM.')
             logger.info('Starting Algebricks-layer bulk loading for ATOM.')
             logger.info('Creating empty dataverse for ATOM.')
             results = self.execute_sqlpp(f"""

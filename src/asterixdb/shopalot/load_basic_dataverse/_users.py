@@ -1,15 +1,12 @@
 import __init__
 import logging
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
+from src.asterixdb.shopalot.executor import AbstractShopALotRunnable
 
 logger = logging.getLogger(__name__)
 
 
-class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
-    # PATH_PREFIX = "localhost:///Users/glenngalvizo/Documents/Projects/asterixdb/ilima-repo/resources/"
-    # SARR_PATH = PATH_PREFIX + "SARR-UsersSample.json"
-    # ATOM_PATH = PATH_PREFIX + "ATOM-UsersSample.json"
+class LoadBasicUsersDataverse(AbstractShopALotRunnable):
     PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
     SARR_PATH = PATH_PREFIX + "SARR-UsersFull.json"
     ATOM_PATH = PATH_PREFIX + "ATOM-UsersFull.json"
@@ -29,8 +26,6 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
             LOAD DATASET ShopALot.SARR.Users USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-
-            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
         """ % self.SARR_PATH)
         self.log_results(results)
 
@@ -46,19 +41,17 @@ class LoadIndexedUsersDataverse(AbstractBenchmarkRunnable):
             LOAD DATASET ShopALot.ATOM.Users USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-
-            CREATE INDEX usersNumberIdx ON Users (phone.number : string ?);
         """ % self.ATOM_PATH)
         self.log_results(results)
 
     def perform_benchmark(self):
         if self.dataverse == self.SARR_DATAVERSE:
-            logger.info('Executing load_indexed_dataverse on Users for SARR.')
+            logger.info('Executing load_basic_dataverse on Users for SARR.')
             self._benchmark_load_sarr()
         else:
-            logger.info('Executing load_indexed_dataverse on Users for ATOM.')
+            logger.info('Executing load_basic_dataverse on Users for ATOM.')
             self._benchmark_load_atom()
 
 
 if __name__ == '__main__':
-    LoadIndexedUsersDataverse().invoke()
+    LoadBasicUsersDataverse().invoke()

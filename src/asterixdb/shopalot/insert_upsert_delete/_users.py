@@ -2,8 +2,8 @@ import __init__
 import logging
 import json
 
-from src.asterixdb.insert_upsert_delete.executor import AbstractInsertUpsertDelete
-from src.datagen.shopalot import AbstractUsersDatagen
+from src.asterixdb.shopalot.insert_upsert_delete.executor import AbstractInsertUpsertDelete
+from src.asterixdb.shopalot.datagen import AbstractUsersDatagen
 
 logger = logging.getLogger(__name__)
 

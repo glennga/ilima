@@ -1,15 +1,12 @@
 import __init__
 import logging
 
-from src.asterixdb.load_indexed_dataset.executor import AbstractLoadIndexedDataset
+from src.asterixdb.shopalot.load_indexed_dataset.executor import AbstractLoadIndexedDataset
 
 logger = logging.getLogger(__name__)
 
 
 class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
-    # PATH_PREFIX = "localhost:///Users/glenngalvizo/Documents/Projects/asterixdb/ilima-repo/resources/"
-    # SARR_PATH = PATH_PREFIX + "SARR-OrdersSample.json"
-    # ATOM_PATH = PATH_PREFIX + "ATOM-OrdersSample.json"
     PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
     SARR_PATH = PATH_PREFIX + "SARR-OrdersFull.json"
     ATOM_PATH = PATH_PREFIX + "ATOM-OrdersFull.json"

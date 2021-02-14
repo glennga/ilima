@@ -2,12 +2,12 @@ import __init__
 import logging
 import tempfile
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
+from src.asterixdb.lower_bound_statement.executor import AbstractLowerBoundRunnable
 
 logger = logging.getLogger(__name__)
 
 
-class LowerBoundLoad(AbstractBenchmarkRunnable):
+class LowerBoundLoad(AbstractLowerBoundRunnable):
     NUMBER_OF_REPEATS = 1000
 
     def __init__(self):

@@ -23,7 +23,7 @@
     }
   },
   "results": {
-    "isSocket": false,
+    "isSocket": true,
     "isFile": true
   }
 }

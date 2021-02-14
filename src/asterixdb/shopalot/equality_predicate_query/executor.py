@@ -2,14 +2,14 @@ import __init__
 import logging
 import abc
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
-from src.datagen.shopalot import DatagenAbstractFactoryProvider
-from src.datagen.shopalot import PrimaryKeyGeneratorFactory
+from src.asterixdb.shopalot.executor import AbstractShopALotRunnable
+from src.asterixdb.shopalot.datagen import DatagenAbstractFactoryProvider
+from src.asterixdb.shopalot.datagen import PrimaryKeyGeneratorFactory
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractEqualityPredicateQuery(AbstractBenchmarkRunnable, abc.ABC):
+class AbstractEqualityPredicateQuery(AbstractShopALotRunnable, abc.ABC):
     def __init__(self, **kwargs):
         self.index_names = kwargs['index_names']
         self.dataset_name = kwargs['dataset_name']

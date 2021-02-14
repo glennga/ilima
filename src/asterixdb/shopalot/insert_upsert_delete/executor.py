@@ -4,14 +4,14 @@ import json
 import abc
 import random
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
-from src.datagen.shopalot import DatagenAbstractFactoryProvider
-from src.datagen.shopalot import PrimaryKeyGeneratorFactory
+from src.asterixdb.shopalot.executor import AbstractShopALotRunnable
+from src.asterixdb.shopalot.datagen import DatagenAbstractFactoryProvider
+from src.asterixdb.shopalot.datagen import PrimaryKeyGeneratorFactory
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
+class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
     DATASET_UPSERT_ALPHAS = [0.0, 0.25, 0.5, 0.75, 1]
     DATASET_INCREMENT_SIZE = 0.005
     DATASET_DECREMENT_SIZE = 0.005
@@ -175,12 +175,12 @@ class AbstractInsertUpsertDelete(AbstractBenchmarkRunnable, abc.ABC):
         if not self._benchmark_insert():
             return
 
-        self.restart_cluster()
+        self.restart_db()
         logger.info(f'Running benchmark for {self.dataverse.upper()} upserts.')
         if not self._benchmark_upsert():
             return
 
-        self.restart_cluster()
+        self.restart_db()
         logger.info(f'Indexing chunk_id {self.dataverse.upper()}.')
         if not self._index_chunk_id():
             return

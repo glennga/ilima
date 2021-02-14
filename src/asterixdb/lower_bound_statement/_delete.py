@@ -1,12 +1,12 @@
 import __init__
 import logging
 
-from src.asterixdb.executor import AbstractBenchmarkRunnable
+from src.asterixdb.lower_bound_statement.executor import AbstractLowerBoundRunnable
 
 logger = logging.getLogger(__name__)
 
 
-class LowerBoundDelete(AbstractBenchmarkRunnable):
+class LowerBoundDelete(AbstractLowerBoundRunnable):
     NUMBER_OF_REPEATS = 1000
 
     def perform_benchmark(self):

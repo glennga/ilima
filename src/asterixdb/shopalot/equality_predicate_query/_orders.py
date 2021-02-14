@@ -2,8 +2,8 @@ import __init__
 import logging
 import json
 
-from src.asterixdb.equality_predicate_query.executor import AbstractEqualityPredicateQuery
-from src.datagen.shopalot import AbstractOrdersDatagen
+from src.asterixdb.shopalot.equality_predicate_query.executor import AbstractEqualityPredicateQuery
+from src.asterixdb.shopalot.datagen import AbstractOrdersDatagen
 
 logger = logging.getLogger(__name__)
 

@@ -1,32 +1,29 @@
 import __init__
 import logging
 
-from src.asterixdb.load_indexed_dataset.executor import AbstractLoadIndexedDataset
+from src.asterixdb.shopalot.load_indexed_dataset.executor import AbstractLoadIndexedDataset
 
 logger = logging.getLogger(__name__)
 
 
-class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
-    # PATH_PREFIX = "localhost:///Users/glenngalvizo/Documents/Projects/asterixdb/ilima-repo/resources/"
-    # SARR_PATH = PATH_PREFIX + "SARR-UsersSample.json"
-    # ATOM_PATH = PATH_PREFIX + "ATOM-UsersSample.json"
+class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
     PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-UsersFull.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-UsersFull.json"
+    SARR_PATH = PATH_PREFIX + "SARR-StoresFull.json"
+    ATOM_PATH = PATH_PREFIX + "ATOM-StoresFull.json"
 
     def __init__(self):
-        super().__init__(sarr_type_ddl="CREATE TYPE UsersType AS { user_id: string };",
-                         atom_type_ddl="CREATE TYPE UsersType AS { user_id: string };")
+        super().__init__(sarr_type_ddl="CREATE TYPE StoresType AS { store_id: string };",
+                         atom_type_ddl="CREATE TYPE StoresType AS { store_id: string };")
 
     def benchmark_sarr(self, run_number):
         results = self.execute_sqlpp("""
-            DROP DATASET ShopALot.SARR.Users IF EXISTS;
+            DROP DATASET ShopALot.SARR.Stores IF EXISTS;
 
             USE ShopALot.SARR;
-            CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
+            CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
+            CREATE INDEX storesCatIdx ON Stores (UNNEST categories : string ?);
 
-            LOAD DATASET ShopALot.SARR.Users USING localfs (
+            LOAD DATASET ShopALot.SARR.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
             );
         """ % self.SARR_PATH)
@@ -41,13 +38,13 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
     def benchmark_atom(self, run_number):
         results = self.execute_sqlpp("""
-             DROP DATASET ShopALot.ATOM.Users IF EXISTS;
+             DROP DATASET ShopALot.ATOM.Stores IF EXISTS;
 
              USE ShopALot.ATOM;
-             CREATE DATASET Users (UsersType) PRIMARY KEY user_id;
-             CREATE INDEX usersNumberIdx ON Users(phone.number : string ?);
+             CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
+             CREATE INDEX storesCatIdx ON Stores (category : string ?);
 
-             LOAD DATASET ShopALot.ATOM.Users USING localfs (
+             LOAD DATASET ShopALot.ATOM.Stores USING localfs (
                  ("path"="%s"), ("format"="json")
              );
          """ % self.ATOM_PATH)
@@ -62,4 +59,4 @@ class LoadIndexedUsersDataset(AbstractLoadIndexedDataset):
 
 
 if __name__ == '__main__':
-    LoadIndexedUsersDataset().invoke()
+    LoadIndexedStoresDataset().invoke()
