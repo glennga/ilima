@@ -2,7 +2,7 @@ import __init__
 import logging
 import tempfile
 
-from src.asterixdb.lower_bound_statement.executor import AbstractLowerBoundRunnable
+from src.asterixdb.lower_bound.executor import AbstractLowerBoundRunnable
 
 logger = logging.getLogger(__name__)
 

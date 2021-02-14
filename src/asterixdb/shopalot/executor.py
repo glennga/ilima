@@ -14,8 +14,9 @@ class AbstractShopALotRunnable(AbstractAsterixDBRunnable, abc.ABC):
     SARR_DATAVERSE = 'sarr'
     ATOM_DATAVERSE = 'atom'
 
-    def _collect_config(self):
+    def _collect_config(self, **kwargs):
         parser = argparse.ArgumentParser(description='Benchmark ShopALot CRUD on an AsterixDB instance.')
+        parser.add_argument('dataverse', type=str, choices=['atom', 'sarr'], help='Dataverse to benchmark.')
         parser.add_argument('--config', type=str, default='config/asterixdb.json', help='Path to the config file.')
         parser.add_argument('--datagen', type=str, default='config/shopalot.json', help='Path to the datagen file.')
         parser_args = parser.parse_args()
@@ -25,12 +26,12 @@ class AbstractShopALotRunnable(AbstractAsterixDBRunnable, abc.ABC):
         config_json['shopalot'] = parser_args.datagen
         config_json['dataverse'] = parser_args.dataverse
         config_json['resultsDir'] = 'out/' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '-' + \
-            self.__class__.__name__ + '-' + self.dataverse.upper() + '-A'
+            self.__class__.__name__ + '-' + parser_args.dataverse.upper() + '-A'
 
-        return config_json
+        return {**config_json, **kwargs}
 
     def __init__(self, **kwargs):
-        super().__init__(**{**self._collect_config(), **kwargs})
+        super().__init__(**self._collect_config(**kwargs))
         self.dataverse = self.config['dataverse']
 
     def do_indexes_exist(self, index_names, dataset_name):

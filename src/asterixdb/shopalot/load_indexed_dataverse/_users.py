@@ -11,9 +11,6 @@ class LoadIndexedUsersDataverse(AbstractShopALotRunnable):
     SARR_PATH = PATH_PREFIX + "SARR-UsersFull.json"
     ATOM_PATH = PATH_PREFIX + "ATOM-UsersFull.json"
 
-    def __init__(self):
-        super().__init__()
-
     def _benchmark_load_sarr(self):
         results = self.execute_sqlpp("""
             DROP DATAVERSE ShopALot.SARR IF EXISTS;
