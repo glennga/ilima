@@ -12,6 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
+    def __init__(self, **kwargs):
+        self.nc_uri = self.config['benchmark']['nodeController']['address'] + ':' + \
+            str(self.config['benchmark']['nodeController']['port'])
+        self.nc_uri = 'http://' + self.nc_uri + '/query/service'
+        super().__init__(**kwargs)
+
     def execute_sqlpp(self, statement):
         lean_statement = ' '.join(statement.split())
         query_parameters = {

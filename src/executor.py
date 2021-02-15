@@ -26,13 +26,9 @@ class AbstractBenchmarkRunnable(abc.ABC):
         subprocess_pipe.stdout.close()
 
     def __init__(self, **kwargs):
-        self.config = kwargs
-        logger.info(f'Using the following configuration: {self.config}')
-
-        self.nc_uri = self.config['benchmark']['nodeController']['address'] + ':' + \
-                      str(self.config['benchmark']['nodeController']['port'])
-        self.nc_uri = 'http://' + self.nc_uri + '/query/service'
+        logger.info(f'Using the following configuration: {kwargs}')
         self.execution_id = str(uuid.uuid4())
+        self.config = kwargs
 
         # Setup our benchmarking outputs (to analysis cluster, to file).
         if self.config['results']['isFile']:
