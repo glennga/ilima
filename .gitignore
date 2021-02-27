@@ -5,6 +5,5 @@
 /resources/*
 
 # Tools that are specific to my system.
-/tools/download_results.sh
 /tools/config_sink.py
 /tools/asterixdb/*
