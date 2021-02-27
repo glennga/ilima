@@ -1,4 +1,3 @@
-import __init__
 import logging
 
 from src.asterixdb.shopalot.executor import AbstractBenchmarkRunnable

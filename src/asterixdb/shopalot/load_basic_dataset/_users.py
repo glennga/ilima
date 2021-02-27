@@ -1,4 +1,3 @@
-import __init__
 import logging
 
 from src.asterixdb.shopalot.load_basic_dataset.executor import AbstractLoadBasicDataset

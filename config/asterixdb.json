@@ -11,19 +11,5 @@
       "dbh-2074.ics.uci.edu"
     ]
   },
-  "analysisCluster": {
-    "nodeController": {
-      "address": "ilima.kona.local",
-      "port": 19002
-    },
-    "feedSocketPort": 19050,
-    "targetDataset": {
-      "dataverse": "BenchmarkAnalysis",
-      "dataset": "ResultsDataset"
-    }
-  },
-  "results": {
-    "isSocket": true,
-    "isFile": true
-  }
+  "package": "resources/asterixdb"
 }

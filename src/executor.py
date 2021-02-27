@@ -1,14 +1,18 @@
-import __init__
+import logging.config
 import datetime
 import logging
-import json
 import socket
 import uuid
 import os
 import subprocess
 import abc
+import json
 
-logger = logging.getLogger(__name__)
+
+with open('config/logging.json') as logging_config_file:
+    logging_json = json.load(logging_config_file)
+    logging.config.dictConfig({k: v for k, v in logging_json.items() if k != 'analysisCluster'})
+    logger = logging.getLogger(__name__)
 
 
 class AbstractBenchmarkRunnable(abc.ABC):
@@ -26,9 +30,9 @@ class AbstractBenchmarkRunnable(abc.ABC):
         subprocess_pipe.stdout.close()
 
     def __init__(self, **kwargs):
-        logger.info(f'Using the following configuration: {kwargs}')
+        self.config = {**logging_json, **kwargs}
+        logger.info(f'Using the following configuration: {self.config}')
         self.execution_id = str(uuid.uuid4())
-        self.config = kwargs
 
         # Setup our benchmarking outputs (to analysis cluster, to file).
         if self.config['results']['isFile']:
