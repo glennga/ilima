@@ -21,11 +21,13 @@ if [[ $1 == "asterixdb" ]]; then
   docker pull ubuntu
   echo -e "
     FROM ubuntu:18.04
+    RUN mkdir /resources
     RUN apt-get update && apt install -y \
       openjdk-11-jdk \
       supervisor
     COPY ${PACKAGE_PATH} /asterixdb
     COPY ${DATA_PATH} /${DATA_PATH}
+    COPY resources/sample.json /resources/sample.json
     COPY tools/asterixdb/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
     COPY tools/asterixdb/cc.conf /asterixdb/cc-master.conf
     CMD /usr/bin/supervisord

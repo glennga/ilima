@@ -41,7 +41,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
             self.results_fp = open(self.config['resultsDir'] + '/' + 'results.json', 'w')
         if self.config['results']['isSocket']:
             self.results_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.results_socket.connect((self.config['analysisCluster']['nodeController']['address'],
+            self.results_socket.connect((self.config['analysisCluster']['clusterController']['address'],
                                          self.config['analysisCluster']['feedSocketPort']))
 
     def log_results(self, results):

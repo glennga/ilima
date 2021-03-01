@@ -1,5 +1,4 @@
 import logging
-import tempfile
 
 from src.asterixdb.lower_bound.executor import AbstractLowerBoundRunnable
 
@@ -8,12 +7,6 @@ logger = logging.getLogger(__name__)
 
 class LowerBoundLoad(AbstractLowerBoundRunnable):
     NUMBER_OF_REPEATS = 1000
-
-    def __init__(self):
-        logger.info('Creating a temporary file to load from.')
-        self.load = tempfile.NamedTemporaryFile(mode='w')
-        self.load.write('{"a": 1}\n')
-        super().__init__()
 
     def perform_benchmark(self):
         logger.info('Now executing the lower bound statement.')
@@ -34,14 +27,11 @@ class LowerBoundLoad(AbstractLowerBoundRunnable):
                 LOAD DATASET GenericDataset USING localfs (
                     ("path"="%s"), ("format"="json")
                 );
-            """ % (self.config['benchmark']['nodeController']['address'] + '://' + self.load.name))
+            """ % 'localhost:///resources/sample.json')
             results['runNumber'] = i + 1
             self.log_results(results)
 
     def perform_post(self):
-        logger.info('Closing the temporary file.')
-        self.load.close()
-
         logger.info('Removing test dataverse.')
         results = self.execute_sqlpp(""" DROP DATAVERSE TestDataverse; """)
         if results['status'] != 'success':

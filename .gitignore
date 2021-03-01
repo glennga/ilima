@@ -3,6 +3,7 @@
 /old/*
 /out/*
 /resources/*
+!/resources/sample.json
 
 # Tools that are specific to my system.
 !/tools/asterixdb/supervisord.conf

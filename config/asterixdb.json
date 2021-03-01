@@ -3,12 +3,12 @@
     "startCommand": "tools/asterixdb/start_command.sh",
     "stopCommand": "tools/asterixdb/stop_command.sh",
     "postCommand": "tools/asterixdb/post_command.sh",
-    "nodeController": {
-      "address": "dbh-2074.ics.uci.edu",
+    "clusterController": {
+      "address": "naupaka",
       "port": 19002
     },
     "allNodesInCluster": [
-      "dbh-2074.ics.uci.edu"
+      "naupaka"
     ]
   },
   "package": "resources/asterixdb"

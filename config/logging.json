@@ -29,7 +29,7 @@
     ]
   },
   "analysisCluster": {
-    "nodeController": {
+    "clusterController": {
       "address": "ilima.kona.local",
       "port": 19002
     },
