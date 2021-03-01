@@ -21,8 +21,9 @@ class AbstractShopALotRunnable(AbstractAsterixDBRunnable, abc.ABC):
         parser_args = parser.parse_args()
         with open(parser_args.config) as config_file:
             config_json = json.load(config_file)
+        with open(parser_args.datagen) as datagen_file:
+            config_json['shopalot'] = json.load(datagen_file)
 
-        config_json['shopalot'] = parser_args.datagen
         config_json['dataverse'] = parser_args.dataverse
         config_json['resultsDir'] = 'out/' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '-' + \
             self.__class__.__name__ + '-' + parser_args.dataverse.upper() + '-A'

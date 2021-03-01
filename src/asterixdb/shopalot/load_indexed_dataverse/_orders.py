@@ -1,15 +1,11 @@
 import logging
 
-from src.asterixdb.shopalot.executor import AbstractBenchmarkRunnable
+from src.asterixdb.shopalot.executor import AbstractShopALotRunnable
 
 logger = logging.getLogger(__name__)
 
 
-class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
-    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-OrdersFull.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-OrdersFull.json"
-
+class LoadIndexedOrdersDataverse(AbstractShopALotRunnable):
     def __init__(self):
         super().__init__()
 
@@ -28,7 +24,7 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
 
             CREATE INDEX ordersItemQtyProductIdx ON Orders(UNNEST items SELECT qty : int ?, product_id : string ?);
             CREATE INDEX ordersProductItemQtyIdx ON Orders(UNNEST items SELECT product_id : string ?, qty : int ?);
-        """ % self.SARR_PATH)
+        """ % ('localhost:///' + self.config['shopalot']['orders']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 
     def _benchmark_load_atom(self):
@@ -46,7 +42,7 @@ class LoadIndexedOrdersDataverse(AbstractBenchmarkRunnable):
             
             CREATE INDEX ordersItemQtyProductIdx ON Orders(item.qty : int ?, item.product_id : string ?);
             CREATE INDEX ordersProductItemQtyIdx ON Orders(item.product_id : string ?, item.qty : int ?);
-        """ % self.ATOM_PATH)
+        """ % ('localhost:///' + self.config['shopalot']['orders']['atomDataverse']['fullFilename']))
         self.log_results(results)
 
     def perform_benchmark(self):

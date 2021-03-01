@@ -6,10 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 class LoadIndexedUsersDataverse(AbstractShopALotRunnable):
-    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-UsersFull.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-UsersFull.json"
-
     def _benchmark_load_sarr(self):
         results = self.execute_sqlpp("""
             DROP DATAVERSE ShopALot.SARR IF EXISTS;
@@ -24,7 +20,7 @@ class LoadIndexedUsersDataverse(AbstractShopALotRunnable):
             );
 
             CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
-        """ % self.SARR_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['users']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 
     def _benchmark_load_atom(self):
@@ -41,7 +37,7 @@ class LoadIndexedUsersDataverse(AbstractShopALotRunnable):
             );
 
             CREATE INDEX usersNumberIdx ON Users (phone.number : string ?);
-        """ % self.ATOM_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['users']['atomDataverse']['fullFilename']))
         self.log_results(results)
 
     def perform_benchmark(self):

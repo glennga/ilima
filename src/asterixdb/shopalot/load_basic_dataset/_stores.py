@@ -6,10 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 class LoadBasicStoresDataset(AbstractLoadBasicDataset):
-    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-StoresFull.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-StoresFull.json"
-
     def __init__(self):
         super().__init__(sarr_type_ddl="CREATE TYPE StoresType AS { store_id: string };",
                          atom_type_ddl="CREATE TYPE StoresType AS { store_id: string };")
@@ -24,7 +20,7 @@ class LoadBasicStoresDataset(AbstractLoadBasicDataset):
             LOAD DATASET ShopALot.SARR.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-        """ % self.SARR_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['stores']['sarrDataverse']['fullFilename']))
         if results['status'] != 'success':
             logger.error(f'Result of bulk-loading was not success, but {results["status"]}.')
             return False
@@ -44,7 +40,7 @@ class LoadBasicStoresDataset(AbstractLoadBasicDataset):
              LOAD DATASET ShopALot.ATOM.Stores USING localfs (
                  ("path"="%s"), ("format"="json")
              );
-         """ % self.ATOM_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['stores']['atomDataverse']['fullFilename']))
         if results['status'] != 'success':
             logger.error(f'Result of bulk-loading was not success, but {results["status"]}.')
             return False

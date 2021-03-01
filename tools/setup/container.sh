@@ -5,8 +5,10 @@ USAGE_STRING="Usage: container.sh [asterixdb | couchbase | mongodb | mysql] [sho
 # Experiment specific settings.
 if [[ $# -eq 2 ]] && [[ $2 == "shopalot" ]]; then
   DATA_PATH=$(jq -r .dataPath config/shopalot.json)
+  echo "Using data path: ${DATA_PATH}"
 elif [[ $# -eq 2 ]] && [[ $2 == "tpc_ch" ]]; then
   DATA_PATH=$(jq -r .dataPath config/tpc_ch.json)
+  echo "Using data path: ${DATA_PATH}"
 else
   echo "$USAGE_STRING"
   exit 1

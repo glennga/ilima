@@ -6,10 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 class LoadBasicStoresDataverse(AbstractShopALotRunnable):
-    PATH_PREFIX = "dbh-2074.ics.uci.edu:///home/ggalvizo/ilima/resources/"
-    SARR_PATH = PATH_PREFIX + "SARR-StoresFull.json"
-    ATOM_PATH = PATH_PREFIX + "ATOM-StoresFull.json"
-
     def __init__(self):
         super().__init__()
 
@@ -25,7 +21,7 @@ class LoadBasicStoresDataverse(AbstractShopALotRunnable):
             LOAD DATASET ShopALot.SARR.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-        """ % self.SARR_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['stores']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 
     def _benchmark_load_atom(self):
@@ -40,7 +36,7 @@ class LoadBasicStoresDataverse(AbstractShopALotRunnable):
             LOAD DATASET ShopALot.ATOM.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
             );
-        """ % self.ATOM_PATH)
+          """ % ('localhost:///' + self.config['shopalot']['stores']['atomDataverse']['fullFilename']))
         self.log_results(results)
 
     def perform_benchmark(self):
