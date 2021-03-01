@@ -1,12 +1,13 @@
 {
+  "dataPath": "resources/shopalot",
   "users": {
     "atomDataverse": {
-      "fullFilename": "resources/ATOM-UsersFull.json",
-      "eighthFilename": "resources/ATOM-UsersEighth.json"
+      "fullFilename": "resources/shopalot/ATOM-UsersFull.json",
+      "eighthFilename": "resources/shopalot/ATOM-UsersEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/SARR-UsersFull.json",
-      "eighthFilename": "resources/SARR-UsersEighth.json"
+      "fullFilename": "resources/shopalot/SARR-UsersFull.json",
+      "eighthFilename": "resources/shopalot/SARR-UsersEighth.json"
     },
     "idRange": {
       "start": 0,
@@ -16,12 +17,12 @@
   },
   "stores": {
     "atomDataverse": {
-      "fullFilename": "resources/ATOM-StoresFull.json",
-      "eighthFilename": "resources/ATOM-StoresEighth.json"
+      "fullFilename": "resources/shopalot/ATOM-StoresFull.json",
+      "eighthFilename": "resources/shopalot/ATOM-StoresEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/SARR-StoresFull.json",
-      "eighthFilename": "resources/SARR-StoresEighth.json"
+      "fullFilename": "resources/shopalot/SARR-StoresFull.json",
+      "eighthFilename": "resources/shopalot/SARR-StoresEighth.json"
     },
     "idRange": {
       "start": 0,
@@ -31,12 +32,12 @@
   },
   "orders": {
     "atomDataverse": {
-      "fullFilename": "resources/ATOM-OrdersFull.json",
-      "eighthFilename": "resources/ATOM-OrdersEighth.json"
+      "fullFilename": "resources/shopalot/ATOM-OrdersFull.json",
+      "eighthFilename": "resources/shopalot/ATOM-OrdersEighth.json"
     },
     "sarrDataverse": {
-      "fullFilename": "resources/SARR-OrdersFull.json",
-      "eighthFilename": "resources/SARR-rdersEighth.json"
+      "fullFilename": "resources/shopalot/SARR-OrdersFull.json",
+      "eighthFilename": "resources/shopalot/SARR-OrdersEighth.json"
     },
     "idRange": {
       "start": 0,

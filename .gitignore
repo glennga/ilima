@@ -5,5 +5,7 @@
 /resources/*
 
 # Tools that are specific to my system.
-/tools/config_sink.py
+!/tools/asterixdb/supervisord.conf
+!/tools/asterixdb/cc.conf
 /tools/asterixdb/*
+/tools/config_sink.py
