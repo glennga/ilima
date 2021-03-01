@@ -1,8 +1,8 @@
 {
   "benchmark": {
-    "startCommand": "tools/asterixdb/start_command.sh",
-    "stopCommand": "tools/asterixdb/stop_command.sh",
-    "postCommand": "tools/asterixdb/post_command.sh",
+    "startCommand": "tools/no_command.sh",
+    "stopCommand": "tools/no_command.sh",
+    "postCommand": "tools/no_command.sh",
     "clusterController": {
       "address": "naupaka",
       "port": 19002
