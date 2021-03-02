@@ -64,10 +64,12 @@ elif [[ $1 == "couchbase" ]]; then
 
 elif [[ $1 == "mongodb" ]]; then
   echo "Launching instance of MongoDB."
-  docker pull mongodb
+  docker pull mongo
   docker rm -f mongodb_ || true
   echo -e "
-    FROM mongodb
+    FROM mongo
+    ENV MONGO_INITDB_ROOT_USERNAME=$(jq -r .username config/mongodb.json)
+    ENV MONGO_INITDB_ROOT_PASSWORD=$(jq -r .password config/mongodb.json)
     COPY ${DATA_PATH} /${DATA_PATH}
   " | docker build -t ilima/mongodb -f- .
   docker run --detach \
@@ -81,7 +83,9 @@ elif [[ $1 == "mysql" ]]; then
   docker rm -f mysql_ || true
   echo -e "
     FROM mysql
-    ENV MYSQL_ROOT_PASSWORD=AutumnNeverFalls5
+    ENV MYSQL_ROOT_PASSWORD=$(jq -r .password config/mysql.json)
+    ENV MYSQL_USER=$(jq -r .username config/mysql.json)
+    ENV MYSQL_PASSWORD=$(jq -r .password config/mysql.json)
     COPY ${DATA_PATH} /${DATA_PATH}
   " | docker build -t ilima/mysql -f- .
   docker run --detach \

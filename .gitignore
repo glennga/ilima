@@ -9,4 +9,7 @@
 !/tools/asterixdb/supervisord.conf
 !/tools/asterixdb/cc.conf
 /tools/asterixdb/*
+/tools/couchbase/*
+/tools/mongodb/*
+/tools/mysql/*
 /tools/config_sink.py
