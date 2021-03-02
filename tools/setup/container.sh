@@ -51,6 +51,16 @@ elif [[ $1 == "couchbase" ]]; then
     --name couchbase_ \
     --network="host" \
     ilima/couchbase
+  echo "Waiting for container to spin up..."
+  sleep 5
+  docker exec couchbase_ /opt/couchbase/bin/couchbase-cli cluster-init \
+    --cluster-username "$(jq -r .username config/couchbase.json)" \
+    --cluster-password "$(jq -r .password config/couchbase.json)" \
+    --services data,index,query,fts \
+    --cluster-ramsize 2048 \
+    --cluster-index-ramsize 1024 \
+    --cluster-fts-ramsize 1024 \
+    --index-storage-setting default
 
 elif [[ $1 == "mongodb" ]]; then
   echo "Launching instance of MongoDB."
