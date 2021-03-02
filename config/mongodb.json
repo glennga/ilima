@@ -1,4 +1,9 @@
 {
   "username": "admin",
-  "password": "password"
+  "password": "password",
+  "benchmark": {
+    "startCommand": "tools/no_command.sh",
+    "stopCommand": "tools/no_command.sh",
+    "postCommand": "tools/no_command.sh"
+  }
 }
