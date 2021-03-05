@@ -1,6 +1,7 @@
 {
   "username": "admin",
   "password": "password",
+  "database": "naupaka",
   "benchmark": {
     "startCommand": "tools/no_command.sh",
     "stopCommand": "tools/no_command.sh",

@@ -57,10 +57,18 @@ elif [[ $1 == "couchbase" ]]; then
     --cluster-username "$(jq -r .username config/couchbase.json)" \
     --cluster-password "$(jq -r .password config/couchbase.json)" \
     --services data,index,query,fts \
-    --cluster-ramsize 2048 \
-    --cluster-index-ramsize 1024 \
-    --cluster-fts-ramsize 1024 \
+    --cluster-ramsize "$(jq -r .cluster.ramsize config/couchbase.json)" \
+    --cluster-index-ramsize "$(jq -r .cluster.indexRamsize config/couchbase.json)" \
+    --cluster-fts-ramsize "$(jq -r .cluster.ftsRamsize config/couchbase.json)" \
     --index-storage-setting default
+  sleep 1
+  docker exec couchbase_ /opt/couchbase/bin/couchbase-cli bucket-create \
+    --cluster localhost \
+    --username "$(jq -r .username config/couchbase.json)" \
+    --password "$(jq -r .password config/couchbase.json)" \
+    --bucket "$(jq -r .cluster.bucket config/couchbase.json)" \
+    --bucket-type couchbase \
+    --bucket-ramsize "$(jq -r .cluster.ramsize config/couchbase.json)"
 
 elif [[ $1 == "mongodb" ]]; then
   echo "Launching instance of MongoDB."
@@ -86,6 +94,7 @@ elif [[ $1 == "mysql" ]]; then
     ENV MYSQL_ROOT_PASSWORD=$(jq -r .password config/mysql.json)
     ENV MYSQL_USER=$(jq -r .username config/mysql.json)
     ENV MYSQL_PASSWORD=$(jq -r .password config/mysql.json)
+    ENV MYSQL_DATABASE=$(jq -r .database config/mysql.json)
     COPY ${DATA_PATH} /${DATA_PATH}
   " | docker build -t ilima/mysql -f- .
   docker run --detach \

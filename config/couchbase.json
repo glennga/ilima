@@ -1,6 +1,13 @@
 {
   "username": "admin",
   "password": "password",
+  "cluster": {
+    "ramsize": 2048,
+    "indexRamsize": 1024,
+    "ftsRamsize": 1024,
+    "address": "naupaka",
+    "bucket": "naupaka"
+  },
   "benchmark": {
     "startCommand": "tools/no_command.sh",
     "stopCommand": "tools/no_command.sh",
