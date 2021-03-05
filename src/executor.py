@@ -17,17 +17,22 @@ with open('config/logging.json') as logging_config_file:
 
 class AbstractBenchmarkRunnable(abc.ABC):
     @staticmethod
-    def _call_subprocess(command):
+    def call_subprocess(command):
         subprocess_pipe = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True
         )
+
+        resultant = ''
         for stdout_line in iter(subprocess_pipe.stdout.readline, ""):
             if stdout_line.strip() != '':
-                logger.debug(stdout_line.strip())
+                resultant += stdout_line
+                for line in resultant.strip().split('\n'):
+                    logger.debug(line)
         subprocess_pipe.stdout.close()
+        return resultant
 
     def __init__(self, **kwargs):
         self.config = {**logging_json, **kwargs}
@@ -66,9 +71,9 @@ class AbstractBenchmarkRunnable(abc.ABC):
 
     def restart_db(self):
         logger.info('Running STOP command.')
-        self._call_subprocess(self.config['benchmark']['stopCommand'])
+        self.call_subprocess(self.config['benchmark']['stopCommand'])
         logger.info('Running START command.')
-        self._call_subprocess(self.config['benchmark']['startCommand'])
+        self.call_subprocess(self.config['benchmark']['startCommand'])
         logger.info('Waiting for database to start...')
 
     @abc.abstractmethod
@@ -91,7 +96,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
         # Populate our results directory.
         logger.info('Running finalize command for copying config + log files.')
         [h.flush() for h in logger.handlers]
-        self._call_subprocess([self.config['benchmark']['postCommand'], self.config['resultsDir']])
+        self.call_subprocess([self.config['benchmark']['postCommand'], self.config['resultsDir']])
 
         # Perform any post action.
         self.perform_post()
