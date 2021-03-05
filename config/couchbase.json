@@ -8,6 +8,11 @@
     "address": "naupaka",
     "bucket": "naupaka"
   },
+  "loadCommand": [
+    "ssh",
+    "glenn@naupaka",
+    "docker exec couchbase_ /opt/couchbase/bin/cbimport json"
+  ],
   "benchmark": {
     "startCommand": "tools/no_command.sh",
     "stopCommand": "tools/no_command.sh",
