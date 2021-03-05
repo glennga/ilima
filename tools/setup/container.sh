@@ -46,6 +46,7 @@ elif [[ $1 == "couchbase" ]]; then
   echo -e "
     FROM couchbase
     COPY ${DATA_PATH} /${DATA_PATH}
+    COPY resources/sample.json /resources/sample.json
   " | docker build -t ilima/couchbase -f- .
   docker run --detach \
     --name couchbase_ \
@@ -79,6 +80,7 @@ elif [[ $1 == "mongodb" ]]; then
     ENV MONGO_INITDB_ROOT_USERNAME=$(jq -r .username config/mongodb.json)
     ENV MONGO_INITDB_ROOT_PASSWORD=$(jq -r .password config/mongodb.json)
     COPY ${DATA_PATH} /${DATA_PATH}
+    COPY resources/sample.json /resources/sample.json
   " | docker build -t ilima/mongodb -f- .
   docker run --detach \
     --name mongodb_ \
@@ -96,6 +98,7 @@ elif [[ $1 == "mysql" ]]; then
     ENV MYSQL_PASSWORD=$(jq -r .password config/mysql.json)
     ENV MYSQL_DATABASE=$(jq -r .database config/mysql.json)
     COPY ${DATA_PATH} /${DATA_PATH}
+    COPY resources/sample.json /resources/sample.json
   " | docker build -t ilima/mysql -f- .
   docker run --detach \
     --name mysql_ \
