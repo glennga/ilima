@@ -52,7 +52,7 @@ elif [[ $1 == "couchbase" ]]; then
     --network="host" \
     ilima/couchbase
   echo "Waiting for container to spin up..."
-  sleep 5
+  sleep 10
   docker exec couchbase_ /opt/couchbase/bin/couchbase-cli cluster-init \
     --cluster-username "$(jq -r .username config/couchbase.json)" \
     --cluster-password "$(jq -r .password config/couchbase.json)" \
