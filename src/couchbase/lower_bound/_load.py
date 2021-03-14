@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from src.couchbase.lower_bound.executor import AbstractLowerBoundRunnable
 
