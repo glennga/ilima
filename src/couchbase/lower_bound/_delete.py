@@ -23,7 +23,7 @@ class LowerBoundDelete(AbstractLowerBoundRunnable):
             logger.debug(f'Executing run {i + 1} for the lower bound statement.')
             results = self.execute_n1ql(f"""
                 DELETE FROM `{self.bucket_name}`
-                WHERE a = 1;
+                WHERE a = 0;
             """)
             results['runNumber'] = i + 1
             self.log_results(results)
