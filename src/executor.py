@@ -17,7 +17,7 @@ with open('config/logging.json') as logging_config_file:
 
 class AbstractBenchmarkRunnable(abc.ABC):
     @staticmethod
-    def call_subprocess(command):
+    def call_subprocess(command, is_log=True):
         subprocess_pipe = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -30,7 +30,8 @@ class AbstractBenchmarkRunnable(abc.ABC):
             if stdout_line.strip() != '':
                 resultant += stdout_line
                 for line in resultant.strip().split('\n'):
-                    logger.debug(line)
+                    if is_log:
+                        logger.debug(line)
         subprocess_pipe.stdout.close()
         return resultant
 
