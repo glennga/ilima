@@ -104,6 +104,17 @@ elif [[ $1 == "mysql" ]]; then
     --name mysql_ \
     --network="host" \
     ilima/mysql
+  echo "Waiting for container to spin up..."
+  sleep 10
+  docker exec mysql_ mysql \
+    --user "root" \
+    --password="$(jq -r .password config/couchbase.json)" \
+    --execute "
+      GRANT ALL PRIVILEGES ON *.*
+      TO '$(jq -r .username config/mysql.json)'@'%'
+      WITH GRANT OPTION;
+      FLUSH PRIVILEGES;
+    "
 
 else
   echo "$USAGE_STRING"
