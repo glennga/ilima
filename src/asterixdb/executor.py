@@ -22,7 +22,7 @@ class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
         query_parameters = {
             'statement': lean_statement,
             'plan-format': 'STRING',
-            # 'profile': 'timings',
+            'profile': 'timings',
             'rewritten-expression-tree': True,
             'optimized-logical-plan': True,
             'expression-tree': True,

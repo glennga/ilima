@@ -43,7 +43,7 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
         lean_statement = ' '.join(statement.split())
         try:
             response_iterable = self.cluster.query(lean_statement, QueryOptions(
-                # profile=QueryProfile.TIMINGS,
+                profile=QueryProfile.TIMINGS,
                 metrics=True
             ))
             response_json = {'statement': lean_statement, 'results': []}
