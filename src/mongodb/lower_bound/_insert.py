@@ -13,13 +13,14 @@ class LowerBoundInsert(AbstractLowerBoundRunnable):
         self.drop_database()
 
         logger.info('Initializing test database and collection (+ buffer).')
+        self.initialize_database()
         self.create_collection('TestBuffer')
         self.create_collection('Test')
 
         logger.info('Now executing the lower bound statement.')
         for i in range(self.NUMBER_OF_REPEATS):
             logger.debug(f'Executing run {i + 1} for the lower bound statement.')
-            results = self.execute_update('Test', [{"a": 1}])
+            results = self.execute_insert('Test', [{"a": 1}])
             results['runNumber'] = i + 1
             self.log_results(results)
 

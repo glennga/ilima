@@ -11,6 +11,7 @@ class LowerBoundLoad(AbstractLowerBoundRunnable):
     def perform_benchmark(self):
         logger.info('Removing database.')
         self.drop_database()
+        self.initialize_database()
 
         logger.info('Now executing the lower bound statement.')
         for i in range(self.NUMBER_OF_REPEATS):

@@ -13,13 +13,14 @@ class LowerBoundSelect(AbstractLowerBoundRunnable):
         self.drop_database()
 
         logger.info('Initializing test database and collection.')
+        self.initialize_database()
         self.create_collection('Test')
-        self.execute_update('Test', [{"a": 1}])
+        self.execute_insert('Test', [{"a": 1}])
 
         logger.info('Now executing the lower bound statement.')
         for i in range(self.NUMBER_OF_REPEATS):
             logger.debug(f'Executing run {i + 1} for the lower bound statement.')
-            results = self.execute_select('Test', '[{ $match: { a: 0 }}]')
+            results = self.execute_select('Test', {'a': 1})
             results['runNumber'] = i + 1
             self.log_results(results)
 

@@ -11,11 +11,6 @@
     "glenn@naupaka",
     "docker exec mongodb_ mongoimport"
   ],
-  "mongoCommand": [
-    "ssh",
-    "glenn@naupaka",
-    "docker exec mongodb_ mongo"
-  ],
   "benchmark": {
     "startCommand": "tools/no_command.sh",
     "stopCommand": "tools/no_command.sh",
