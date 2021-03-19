@@ -70,6 +70,11 @@ class AbstractBenchmarkRunnable(abc.ABC):
             else:
                 logger.info('Result successfully sent to cluster.')
 
+        # To the console.
+        if self.config['results']['isConsole']:
+            logger.debug('Writing result to console.')
+            logger.debug(json.dumps(results))
+
     def restart_db(self):
         logger.info('Running STOP command.')
         self.call_subprocess(self.config['benchmark']['stopCommand'])

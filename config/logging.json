@@ -41,6 +41,7 @@
   },
   "results": {
     "isSocket": true,
-    "isFile": true
+    "isFile": true,
+    "isConsole": false
   }
 }
