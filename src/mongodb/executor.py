@@ -2,9 +2,9 @@ import logging
 import pymongo
 import abc
 import time
-import urllib.parse
 import json
-
+import urllib.parse
+import bson.json_util
 
 from src.executor import AbstractBenchmarkRunnable
 
@@ -20,29 +20,11 @@ class AbstractMongoDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
                             f':{self.config["database"]["port"]}'
         self.client = pymongo.MongoClient(self.database_uri)
         self.database = self.client[self.config['database']['name']]
-        # self.database.set_profiling_level(2)
+        self.database.set_profiling_level(2)
 
-    def _execute_mongocommand(self, command):
-        mongo_command = self.config['mongoCommand'][:-1] + [
-            self.config['mongoCommand'][-1] + ' ' + ' '.join(f"""
-                --username {self.config['username']}
-                --password {self.config['password']}
-                --eval '{" ".join(command.split())}'
-            """.split())
-        ]
-        raw_execution_output = self.call_subprocess(mongo_command, is_log=False)
-
-        try:
-            return {
-                'mongoCommand': mongo_command,
-                'response': json.loads(raw_execution_output[:-1].split('\n')[-1])
-            }
-        except json.JSONDecodeError:
-            return {
-                'mongoCommand': mongo_command,
-                'output': raw_execution_output,
-                'error': True
-            }
+    @staticmethod
+    def _format_strict(result):
+        return json.loads(bson.json_util.dumps(result))
 
     def execute_mongoimport(self, file_path, collection):
         mongoimport_command = self.config['importCommand'][:-1] + [
@@ -62,7 +44,7 @@ class AbstractMongoDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
     def initialize_database(self):
         self.drop_database()  # Start from a clean database.
         self.database = self.client[self.config['database']['name']]
-        # self.database.set_profiling_level(2)
+        self.database.set_profiling_level(2)
 
         logger.info('Initializing database with a collection and a document.')
         init_collection = self.database['InitCollection']
@@ -101,44 +83,81 @@ class AbstractMongoDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
         else:
             logger.error('Could not create the collection successfully.')
 
-    def execute_update(self, name, documents, primary_key='_id', is_upsert=False):
+    def execute_insert(self, name, documents, primary_key='_id'):
         # Insert into our buffer dataset.
         buffer_collection = self.database[name + 'Buffer']
         buffer_collection.insert(documents)
 
-        # Perform the insert / upsert (this is done in a client-side shell).
-        return self._execute_mongocommand(f""" JSON.stringify(
-            db.getSiblingDB("{self.config['database']['name']}")
-                .getCollection("{name}Buffer")
-                .explain("executionStats")
-                .aggregate([
-                    {{ $match: {{ }} }},
-                    {{ $merge: {{ 
-                        into: "{name}", 
-                        on: "{primary_key}",
-                        whenMatched: "{'replace' if is_upsert else 'fail'}"     
-                    }} }}
-                ], {{ allowDiskUse: true }})
-            )
-        """)
+        # Perform the insert.
+        query_results = [self._format_strict(r) for r in buffer_collection.aggregate([
+            {'$match': {}},
+            {'$merge': {
+                'into': name,
+                'on': primary_key,
+                'whenMatched': 'fail'
+            }}
+        ], allowDiskUse=True)]
+        profile_results = self._format_strict(
+            self.database['system.profile']
+                .find({'op': 'insert', 'command.aggregate': name + 'Buffer'})
+                .sort('ts', -1)
+                .limit(1)[0]
+        )
+
+        # Remove all from our buffer dataset.
+        buffer_collection.delete_many({})
+
+        return {'queryResults': query_results, 'profileResults': profile_results}
+
+    def execute_upsert(self, name, documents, primary_key='_id'):
+        # Insert into our buffer dataset.
+        buffer_collection = self.database[name + 'Buffer']
+        buffer_collection.insert(documents)
+
+        # Perform the upsert.
+        query_results = [self._format_strict(r) for r in buffer_collection.aggregate([
+            {'$match': {}},
+            {'$merge': {
+                'into': name,
+                'on': primary_key,
+                'whenMatched': 'replace'
+            }}
+        ], allowDiskUse=True)]
+        profile_results = self._format_strict(
+            self.database['system.profile']
+                .find({'op': 'update', 'command.upsert': True})
+                .sort('ts', -1)
+                .limit(1)[0]
+        )
+
+        # Remove all from our buffer dataset.
+        buffer_collection.delete_many({})
+
+        return {'queryResults': query_results, 'profileResults': profile_results}
 
     def execute_delete(self, name, predicate):
-        return self._execute_mongocommand(f""" JSON.stringify(
-            db.getSiblingDB("{self.config['database']['name']}")
-                .getCollection("{name}")
-                .explain("executionStats")
-                .remove({predicate})
-            )
-        """)
+        collection = self.database[name]
+        delete_results = collection.delete_many(predicate).raw_result
+        profile_results = self._format_strict(
+            self.database['system.profile']
+                .find({'op': 'remove', })
+                .sort('ts', -1)
+                .limit(1)[0]
+        )
 
-    def execute_select(self, name, pipeline):
-        return self._execute_mongocommand(f""" JSON.stringify(
-            db.getSiblingDB("{self.config['database']['name']}")
-                .getCollection("{name}")
-                .explain("executionStats")
-                .aggregate({pipeline}, {{ allowDiskUse: true }})
-            )
-        """)
+        return {'queryResults': delete_results, 'profileResults': profile_results}
+
+    def execute_select(self, name, predicate):
+        collection = self.database[name]
+        query_results = [self._format_strict(r) for r in collection.find(predicate)]
+        profile_results = self._format_strict(
+            self.database['system.profile']
+                .find({'op': 'query', 'ns': self.config['database']['name'] + '.' + name, 'command.find': name})
+                .sort('ts', -1)
+                .limit(1)[0]
+        )
+
+        return {'queryResults': query_results, 'profileResults': profile_results}
 
     def restart_db(self):
         super(AbstractMongoDBRunnable, self).restart_db()
