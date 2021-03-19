@@ -93,6 +93,18 @@ elif [[ $1 == "mysql" ]]; then
   docker rm -f mysql_ || true
   echo -e "
     FROM mysql
+    RUN apt-get update && apt-get install -y wget \
+      locales \
+      apt-utils \
+      lsb-release
+    RUN wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb \
+      && DEBIAN_FRONTEND=noninteractive dpkg -i ./mysql-apt-config_0.8.16-1_all.deb \
+      && rm -f ./mysql-apt-config_0.8.16-1_all.deb
+    RUN apt-get install -y locales && \
+      sed -i -e 's/# en_US.UTF-8.*/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+      dpkg-reconfigure --frontend=noninteractive locales && \
+      update-locale LANG=en_US.UTF-8
+    RUN apt-get update && apt-get install -y mysql-shell
     ENV MYSQL_ROOT_PASSWORD=$(jq -r .password config/mysql.json)
     ENV MYSQL_USER=$(jq -r .username config/mysql.json)
     ENV MYSQL_PASSWORD=$(jq -r .password config/mysql.json)
@@ -105,7 +117,7 @@ elif [[ $1 == "mysql" ]]; then
     --network="host" \
     ilima/mysql
   echo "Waiting for container to spin up..."
-  sleep 10
+  sleep 20
   docker exec mysql_ mysql \
     --user "root" \
     --password="$(jq -r .password config/couchbase.json)" \
@@ -113,7 +125,26 @@ elif [[ $1 == "mysql" ]]; then
       GRANT ALL PRIVILEGES ON *.*
       TO '$(jq -r .username config/mysql.json)'@'%'
       WITH GRANT OPTION;
+
       FLUSH PRIVILEGES;
+
+      UPDATE performance_schema.setup_instruments
+      SET ENABLED = 'YES', TIMED = 'YES'
+      WHERE NAME LIKE '%statement/%';
+
+      UPDATE performance_schema.setup_instruments
+      SET ENABLED = 'YES', TIMED = 'YES'
+      WHERE NAME LIKE '%stage/%';
+
+      UPDATE performance_schema.setup_consumers
+      SET ENABLED = 'YES'
+      WHERE NAME LIKE '%events_statements_%';
+
+      UPDATE performance_schema.setup_consumers
+      SET ENABLED = 'YES'
+      WHERE NAME LIKE '%events_stages_%';
+
+      SELECT 'All commands successfully executed.';
     "
 
 else
