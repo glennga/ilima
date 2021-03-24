@@ -125,26 +125,7 @@ elif [[ $1 == "mysql" ]]; then
       GRANT ALL PRIVILEGES ON *.*
       TO '$(jq -r .username config/mysql.json)'@'%'
       WITH GRANT OPTION;
-
       FLUSH PRIVILEGES;
-
-      UPDATE performance_schema.setup_instruments
-      SET ENABLED = 'YES', TIMED = 'YES'
-      WHERE NAME LIKE '%statement/%';
-
-      UPDATE performance_schema.setup_instruments
-      SET ENABLED = 'YES', TIMED = 'YES'
-      WHERE NAME LIKE '%stage/%';
-
-      UPDATE performance_schema.setup_consumers
-      SET ENABLED = 'YES'
-      WHERE NAME LIKE '%events_statements_%';
-
-      UPDATE performance_schema.setup_consumers
-      SET ENABLED = 'YES'
-      WHERE NAME LIKE '%events_stages_%';
-
-      SELECT 'All commands successfully executed.';
     "
 
 else
