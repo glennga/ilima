@@ -44,7 +44,7 @@ elif [[ $1 == "couchbase" ]]; then
   docker pull couchbase
   docker rm -f couchbase_ || true
   echo -e "
-    FROM couchbase
+    FROM couchbase:enterprise-7.0.0-beta
     COPY ${DATA_PATH} /${DATA_PATH}
     COPY resources/sample.json /resources/sample.json
   " | docker build -t ilima/couchbase -f- .
