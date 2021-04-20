@@ -1,0 +1,8 @@
+# Ignore the resource folders that house all of the data.
+/resources/tpc_ch/*
+/resources/shopalot/*
+
+# These directories are not used in our build either.
+/.git/*
+/out/*
+/venv/*
