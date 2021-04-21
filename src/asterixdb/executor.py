@@ -17,7 +17,7 @@ class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
             str(self.config['benchmark']['clusterController']['port'])
         self.nc_uri = 'http://' + self.nc_uri + '/query/service'
 
-    def execute_sqlpp(self, statement):
+    def execute_sqlpp(self, statement, timeout=None):
         lean_statement = ' '.join(statement.split())
         query_parameters = {
             'statement': lean_statement,
@@ -30,7 +30,7 @@ class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
             'job': True
         }
 
-        response_json = requests.post(self.nc_uri, query_parameters).json()
+        response_json = requests.post(self.nc_uri, query_parameters, timeout=timeout).json()
         if response_json['status'] != 'success':
             logger.warning(f'Status of executing statement {statement} not successful, '
                            f'but instead {response_json["status"]}.')
