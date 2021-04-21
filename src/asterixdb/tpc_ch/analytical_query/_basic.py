@@ -6,9 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class BasicAnalyticalQuery(AbstractQueryRunnable):
-    def _execute_and_log(self, query_f, query_number, run_number, **parameters):
+    def _execute_and_log(self, query_f, query_number, run_number, timeout=None, **parameters):
         logger.info(f'Executing query {query_number}, run number {run_number}.')
-        results = self.execute_sqlpp('\nUSE TPC_CH;\n\n' + query_f(**parameters))
+        results = self.execute_sqlpp('\nUSE TPC_CH;\n\n' + query_f(**parameters), timeout=timeout)
 
         if results['status'] != 'success':
             logger.error(f'Query execution not successful! Parameters: {parameters}')
@@ -23,7 +23,7 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
             return True
 
     def __init__(self):
-        super().__init__(num_queries=50)
+        super().__init__(num_queries=10, num_slow_queries=1)
 
     def perform_benchmark(self):
         logger.info('Executing basic analytical query suite.')
@@ -38,20 +38,23 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
                 if not self._execute_and_log(query_f, number, i + 1, date_1=date_1):
                     return
 
-            # Queries 6, 7, 8, and 14 require two parameters: a start and end date.
-            queries = {6: self.query_6, 7: self.query_7, 8: self.query_8, 14: self.query_14}
+            # Queries 6, 7, and 14 require two parameters: a start and end date.
+            queries = {6: self.query_6, 7: self.query_7, 14: self.query_14}
             for number, query_f in queries.items():
                 date_pair = self.config['tpc_ch']['parameters']['pairDates'] \
                     [i % len(self.config['tpc_ch']['parameters']['pairDates'])]
                 date_1, date_2 = date_pair['date1'], date_pair['date2']
 
-                # Query 8 requires a hint to be specified.
-                if number == 8:
-                    if not self._execute_and_log(query_f, number, i + 1, date_1=date_1, date_2=date_2, hint=''):
-                        return
-                else:
-                    if not self._execute_and_log(query_f, number, i + 1, date_1=date_1, date_2=date_2):
-                        return
+                if not self._execute_and_log(query_f, number, i + 1, date_1=date_1, date_2=date_2):
+                    return
+
+        for i in range(self.config['num_slow_queries']):
+            date_pair = self.config['tpc_ch']['parameters']['pairDates'] \
+                [i % len(self.config['tpc_ch']['parameters']['pairDates'])]
+            date_1, date_2 = date_pair['date1'], date_pair['date2']
+
+            # Query 8 requires two parameters: a start and end date.
+            self._execute_and_log(self.query_8, 8, i + 1, timeout=1800, date_1=date_1, date_2=date_2, hint='')
 
 
 if __name__ == '__main__':

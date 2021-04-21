@@ -30,7 +30,12 @@ class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
             'job': True
         }
 
-        response_json = requests.post(self.nc_uri, query_parameters, timeout=timeout).json()
+        try:
+            response_json = requests.post(self.nc_uri, query_parameters, timeout=timeout).json()
+        except requests.exceptions.ReadTimeout as e:
+            logger.warning(f'Statement {statement} has run longer than the specified timeout {timeout}.')
+            response_json = {'status': f'Timeout. Exception: {str(e)}'}
+
         if response_json['status'] != 'success':
             logger.warning(f'Status of executing statement {statement} not successful, '
                            f'but instead {response_json["status"]}.')
