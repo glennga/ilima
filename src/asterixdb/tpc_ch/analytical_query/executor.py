@@ -140,7 +140,7 @@ class AbstractQueryRunnable(AbstractTPCCHRunnable, abc.ABC):
                                         OL.ol_i_id = S.s_i_id AND 
                                         OL.ol_delivery_d > '{date_1}'
                             GROUP BY    S.s_i_id, S.s_w_id, S.s_quantity
-                            HAVING      2 * S.s_quantity > SUM(OL.ol_quantity)
+                            HAVING      (100 * S.s_quantity) > SUM(OL.ol_quantity)
                             SELECT      VALUE ((S.s_w_id * S.s_i_id) % 10000)
                         ) AND 
                         SU.su_nationkey = N.n_nationkey AND 
