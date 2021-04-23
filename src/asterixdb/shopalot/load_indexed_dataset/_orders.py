@@ -16,8 +16,8 @@ class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.SARR;
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-            CREATE INDEX ordersItemQtyProductIdx ON Orders(UNNEST items SELECT qty : int ?, product_id : string ?);
-            CREATE INDEX ordersProductItemQtyIdx ON Orders(UNNEST items SELECT product_id : string ?, qty : int ?);
+            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : int);
+            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string);
 
             LOAD DATASET ShopALot.SARR.Orders USING localfs (
                 ("path"="%s"), ("format"="json")
@@ -38,8 +38,8 @@ class LoadIndexedOrdersDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.ATOM;
             CREATE DATASET Orders (OrdersType) PRIMARY KEY order_id;
-            CREATE INDEX ordersItemQtyProductIdx ON Orders(item.qty : int ?, item.product_id : string ?);
-            CREATE INDEX ordersProductItemQtyIdx ON Orders(item.product_id : string ?, item.qty : int ?);
+            CREATE INDEX ordersItemQtyProductIdx ON Orders(item.qty : int);
+            CREATE INDEX ordersProductItemQtyIdx ON Orders(item.product_id : string);
 
             LOAD DATASET ShopALot.ATOM.Orders USING localfs (
                 ("path"="%s"), ("format"="json")

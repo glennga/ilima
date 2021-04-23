@@ -25,7 +25,7 @@ class OrdersInsertUpsertDelete(AbstractInsertUpsertDelete):
             'datagen_class': AbstractOrdersDatagen,
             'dataset_size': dataset_size,
             'chunk_size': chunk_size,
-            'index_names': ['ordersItemQtyProductIdx', 'ordersProductItemQtyIdx'],
+            'index_names': ['ordersItemQtyIdx', 'ordersItemProductIdx'],
             'dataset_name': 'Orders',
             'primary_key': 'order_id',
             'user_start_id': config_json['users']['idRange']['start'],

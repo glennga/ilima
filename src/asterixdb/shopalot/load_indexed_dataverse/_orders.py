@@ -22,8 +22,8 @@ class LoadIndexedOrdersDataverse(AbstractShopALotRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX ordersItemQtyProductIdx ON Orders(UNNEST items SELECT qty : int ?, product_id : string ?);
-            CREATE INDEX ordersProductItemQtyIdx ON Orders(UNNEST items SELECT product_id : string ?, qty : int ?);
+            CREATE INDEX ordersItemQtyIdx ON Orders(UNNEST items SELECT qty : int);
+            CREATE INDEX ordersItemProductIdx ON Orders(UNNEST items SELECT product_id : string);
         """ % ('localhost:///' + self.config['shopalot']['orders']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 
@@ -40,8 +40,8 @@ class LoadIndexedOrdersDataverse(AbstractShopALotRunnable):
                 ("path"="%s"), ("format"="json")
             );
             
-            CREATE INDEX ordersItemQtyProductIdx ON Orders(item.qty : int ?, item.product_id : string ?);
-            CREATE INDEX ordersProductItemQtyIdx ON Orders(item.product_id : string ?, item.qty : int ?);
+            CREATE INDEX ordersItemQtyIdx ON Orders(item.qty : int);
+            CREATE INDEX ordersItemProductIdx ON Orders(item.product_id : string);
         """ % ('localhost:///' + self.config['shopalot']['orders']['atomDataverse']['fullFilename']))
         self.log_results(results)
 
