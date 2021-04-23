@@ -23,7 +23,7 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
             return True
 
     def __init__(self):
-        super().__init__(num_queries=10, num_slow_queries=1)
+        super().__init__(num_queries=20, num_slow_queries=1)
 
     def perform_benchmark(self):
         logger.info('Executing basic analytical query suite.')
@@ -54,7 +54,7 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
             date_1, date_2 = date_pair['date1'], date_pair['date2']
 
             # Query 8 requires two parameters: a start and end date.
-            self._execute_and_log(self.query_8, 8, i + 1, timeout=1800, date_1=date_1, date_2=date_2, hint='')
+            self._execute_and_log(self.query_8, 8, i + 1, timeout=3600, date_1=date_1, date_2=date_2, hint='')
 
 
 if __name__ == '__main__':
