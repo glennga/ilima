@@ -13,3 +13,7 @@
 /tools/mongodb/*
 /tools/mysql/*
 /tools/config_sink.py
+
+# Don't include any output files.
+/tools/analysis/.ipynb_checkpoints/
+*.pdf

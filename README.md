@@ -1,7 +1,7 @@
 # ilima
 This repository contains all scripts + queries used to evaluate the multi-valued indexing implementation on AsterixDB. There are two main experiment sets that this repository contains: 
 1. **Internal benchmarking (measuring the "faff")**. This experiment set is meant to compare the existing atomic indexes in AsterixDB against our implementation of multi-valued indexes. To work around the obvious cardinality issue, the main comparison is between an _atomic value_ and a _collection with one element_. We measure the query performance, the ingestion performance, and the index maintenance performance. The dataset + queries used are from a homegrown inventory management example.
-2. **External benchmarking (measuring against other systems)**. This experiment set is meant to compare AsterixDB's multi-valued indexes against the multi-valued indexes of other systems. The systems compared are Couchbase, MongoDB, and MySQL. The dataset + queries used are from a modified CH-benchmark (to more naturally represent `lineitems` in `orders`).
+2. **External benchmarking (measuring against other systems)**. This experiment set is meant to compare AsterixDB's multi-valued indexes against the multi-valued indexes of other systems. The systems compared are Couchbase and MongoDB. The dataset + queries used are from a modified CH-benchmark (to more naturally represent `lineitems` in `orders`).
 
 ## Repository Structure
 This repository is structured as follows:
@@ -19,9 +19,6 @@ ilima-repo
       |- lower_bound
       |- tpc_ch
    |- mongodb
-      |- lower_bound
-      |- tpc_ch
-   |- mysql
       |- lower_bound
       |- tpc_ch
 |- tools                       // Scripts specific to instance.
@@ -101,12 +98,11 @@ As an argument to each experiment program, one must specify the dataverse: 1) `a
 
 2. Generate the ShopALot dataset on the database server node.
   1. Modify the `config/shopalot.json` to change the dataset sizes. The `idRange` field denotes how many records will be generated for that specific dataset (the difference between `end` and `start`), while the `chunkSize` field denotes how many records will be operated on at a time for a maintenance operation (`INSERT` | `UPSERT` | `DELETE`).
-  2. Execute the datagen script. 
-    ```
+  2. Execute the datagen script. There are three datasets that this experiment works on: the `Users`, `Stores`, and `Orders`. This experiment is designed to run each dataset independently (to minimize the required disk space), so this process can be performed iteratively (i.e. generate dataset 1, run experiments, delete dataset 1, generate dataset 2, etc...) or all at once (i.e. generate all datasets, then run all experiments).
+		```
     python3 src/asterixdbshopalot/datagen.py -h
     usage: datagen.py [-h] [--config CONFIG] {user,store,order}
     ```
-  There are three datasets that this experiment works on: the `Users`, `Stores`, and `Orders`. This experiment is designed to run each dataset independently (to minimize the required disk space), so this process can be performed iteratively (i.e. generate dataset 1, run experiments, delete dataset 1, generate dataset 2, etc...) or all at once (i.e. generate all datasets, then run all experiments).
 
 3. Spin up an AsterixDB instance for the ShopALot experiment. This will spawn a Docker container running the specified AsterixDB instance named `asterixdb_`  with local networking.
    ```
@@ -121,7 +117,7 @@ As an argument to each experiment program, one must specify the dataverse: 1) `a
    python3 src/asterixdb/lower_bound/_load.py
    ```
    
-   Having read the section above on datasets and experiment programs, to run your desired experiment is to run `_orders.py`, `_stores.py`, or `_users.py` in the experiment program path of your choosing. As an example, to run the `load_basic_dataset` experiment on the Users dataset in the `ATOM` dataverse would be execute the following:
+   Having read the section above on datasets and experiment programs, to run your desired experiment is to run `_orders.py`, `_stores.py`, or `_users.py` in the experiment program path of your choosing. As an example, to run the `load_basic_dataset` experiment on the Users dataset in the `atom` dataverse would be execute the following:
    
    ```
    python3 src/asterixdb/shopalot/load_basic_dataset/_users.py atom
@@ -130,4 +126,47 @@ As an argument to each experiment program, one must specify the dataverse: 1) `a
 
 ## External Benchmarking Experiments
 
-TODO! 
+### Overview
+
+There are three dimensions to an external benchmarking experiment: 1) the system being tested, 2) the system feature being tested, and 3) the experiment program.
+
+#### Systems (and Features) Being Tested
+
+| System Path                                                 | Description                                                  |
+| ----------------------------------------------------------- | ------------------------------------------------------------ |
+| `src/asterixdb/tpc_ch/{multivalued_indexing | no_indexing}` | AsterixDB (Our system :-)). There is one feature being tested here, which is our multi-valued indexing. We are also testing the performance gain / impact of not having an index. |
+| `src/couchbase/tpc_ch`                                      | Couchbase. We are testing their array-indexing here (a covering index approach). |
+| `src/mongodb/tpc_ch`                                        | MongoDB. We are testing their multi-key indexing. |
+
+#### Experiment Program
+
+There are three different experiment programs: 1) `_initialize.py`, 2) `_query.py`, and 3) `_maintain.py`.
+
+| Program                           | Description                                                  |
+| --------------------------------- | ------------------------------------------------------------ |
+| Initialization (`_initialize.py`) | Loads the initial CH data. This should be run before any of the other programs. |
+| Query (`_query.py`)               | Performs the CH queries that involve "unnesting" the `lineitems` array. These are analytical queries 1, 4, 6, 7, 8, 9, 12, 14, 15, 17, 19, 20, and 21. |
+| Maintenance (`_maintain.py`)      | Performs the transactional portion of the CH benchmark, mainly to inform us of the index maintenance cost of each system. |
+
+### Running Experiments
+
+1. Generate the experiment data!
+2. ...
+
+#### AsterixDB
+
+1. On the database server node, copy a packaged AsterixDB instance to the `resources` folder. Align this location with the `package` field in `config/asterixdb.json`.
+
+2. Spin up an AsterixDB instance for the TPC-CH experiment. This will spawn a Docker container running the specified AsterixDB instance named `asterixdb_`  with local networking.
+
+   ```
+   sudo ./tools/setup/container.sh asterixdb tpc_ch
+   ```
+
+3. Now switch to the database client node. Modify `config/asterixdb.json` and ensure that a) `benchmark.clusterController.address` points to your database server node and b) `benchmark.allNodesInCluster` only contains your database server node.
+
+#### Couchbase
+
+#### MongoDB
+
+#### MySQL
