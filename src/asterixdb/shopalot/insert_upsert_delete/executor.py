@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
-    DATASET_UPSERT_ALPHAS = [0.0, 0.25, 0.5, 0.75, 1]
+    DATASET_UPSERT_ALPHAS = [1.0]
     DATASET_INCREMENT_SIZE = 0.005
     DATASET_DECREMENT_SIZE = 0.005
 
@@ -35,7 +35,7 @@ class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
         self.datagen = datagen_factory(primary_key_generator=None, pk_zfill=len(str(self.dataset_size)), **factory_args)
         super().__init__()
 
-    def _perform_insert_upsert(self, i, operation, text):
+    def _perform_insert_upsert(self, i, operation, text, **kwargs):
         # First, insert into our buffer dataset.
         buffer_results = self.execute_sqlpp(f"""
             INSERT INTO ShopALot.{self.dataverse.upper()}.{self.dataset_name}Buffer [{text}];
@@ -68,6 +68,7 @@ class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
                      f'Execution time: {results["metrics"]["elapsedTime"]}')
 
         results['runNumber'] = i + 1
+        results.update(kwargs)
         if 'results' in results:
             del results['results']
         self.log_results(results)
@@ -123,7 +124,7 @@ class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
 
                 # Perform the upsert itself.
                 upsert_text = ',\n'.join([json.dumps(s) for s in upsert_chunk])
-                if not self._perform_insert_upsert(i, 'upsert', upsert_text):
+                if not self._perform_insert_upsert(i, 'upsert', upsert_text, alpha=alpha):
                     return False
 
         return True
@@ -155,8 +156,7 @@ class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
     def _index_chunk_id(self):
         results = self.execute_sqlpp(f"""
             USE ShopALot.{self.dataverse.upper()};
-            CREATE INDEX {self.dataset_name.capitalize()}ChunkIdx ON 
-                {self.dataset_name.capitalize()} (chunk_id : string ?);
+            CREATE INDEX {self.dataset_name.capitalize()}ChunkIdx ON {self.dataset_name} (chunk_id : string);
         """)
         if results['status'] != 'success':
             logger.error('Could not index chunk_id.')
@@ -192,7 +192,7 @@ class AbstractInsertUpsertDelete(AbstractShopALotRunnable, abc.ABC):
         logger.info(f'Removing the index on chunk_id for {self.dataverse.upper()}.')
         results = self.execute_sqlpp(f"""
             USE ShopALot.{self.dataverse.upper()};
-            DROP INDEX {self.dataset_name.capitalize()}.{self.dataset_name.capitalize()}ChunkIdx IF EXISTS;
+            DROP INDEX {self.dataset_name}.{self.dataset_name.capitalize()}ChunkIdx IF EXISTS;
         """)
         if results['status'] != 'success':
             logger.warning('Could not drop the index on chunk_id.')

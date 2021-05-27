@@ -16,10 +16,12 @@ class LoadIndexedDataverse(AbstractLoadDataverseRunnable):
         self.log_results(results)
 
     def perform_benchmark(self):
-        logger.info('Building and loading dataverse TPC_CH.')
-        self._create_dataverse()
+        logger.info('Building dataverse TPC_CH.')
+        self.create_dataverse()
         logger.info('Creating array indexes on TPC_CH.')
         self._create_indexes()
+        logger.info('Loading dataverse TPC_CH.')
+        self.load_dataverse()
 
 
 if __name__ == '__main__':

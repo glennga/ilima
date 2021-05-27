@@ -22,7 +22,7 @@ class LoadIndexedStoresDataverse(AbstractShopALotRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX storesCatIdx ON Stores(UNNEST categories : string ?);
+            CREATE INDEX storesCatIdx ON Stores(UNNEST categories : string);
           """ % ('localhost:///' + self.config['shopalot']['stores']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 

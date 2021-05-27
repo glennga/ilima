@@ -16,7 +16,7 @@ class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
 
             USE ShopALot.SARR;
             CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
-            CREATE INDEX storesCatIdx ON Stores (UNNEST categories : string ?);
+            CREATE INDEX storesCatIdx ON Stores (UNNEST categories : string);
 
             LOAD DATASET ShopALot.SARR.Stores USING localfs (
                 ("path"="%s"), ("format"="json")
@@ -37,7 +37,7 @@ class LoadIndexedStoresDataset(AbstractLoadIndexedDataset):
 
              USE ShopALot.ATOM;
              CREATE DATASET Stores (StoresType) PRIMARY KEY store_id;
-             CREATE INDEX storesCatIdx ON Stores (category : string ?);
+             CREATE INDEX storesCatIdx ON Stores (category : string);
 
              LOAD DATASET ShopALot.ATOM.Stores USING localfs (
                  ("path"="%s"), ("format"="json")

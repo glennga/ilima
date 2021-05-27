@@ -42,7 +42,7 @@ class AbstractShopALotRunnable(AbstractAsterixDBRunnable, abc.ABC):
                     SELECT *
                     FROM `Metadata`.`Index`
                     WHERE IndexName = "{index_name}" AND 
-                          DataverseName = "ShopALot.ATOM" AND 
+                          DataverseName = "ShopALot/ATOM" AND 
                           DatasetName = "{dataset_name}";
                 """)
                 if len(results['results']) == 0:
@@ -55,7 +55,7 @@ class AbstractShopALotRunnable(AbstractAsterixDBRunnable, abc.ABC):
                     SELECT *
                     FROM `Metadata`.`Index`
                     WHERE IndexName = "{index_name}" AND 
-                          DataverseName = "ShopALot.SARR" AND 
+                          DataverseName = "ShopALot/SARR" AND 
                           DatasetName = "{dataset_name}";
                 """)
                 if len(results['results']) == 0:

@@ -19,7 +19,7 @@ class LoadIndexedUsersDataverse(AbstractShopALotRunnable):
                 ("path"="%s"), ("format"="json")
             );
 
-            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string ?);
+            CREATE INDEX usersNumberIdx ON Users(UNNEST phones SELECT number : string);
           """ % ('localhost:///' + self.config['shopalot']['users']['sarrDataverse']['fullFilename']))
         self.log_results(results)
 

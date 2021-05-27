@@ -23,37 +23,29 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
             return True
 
     def __init__(self):
-        super().__init__(num_queries=20, num_slow_queries=1)
+        super().__init__(num_queries=40, num_slow_queries=0)
 
     def perform_benchmark(self):
         logger.info('Executing basic analytical query suite.')
 
         for i in range(self.config['num_queries']):
-            # Queries 1, 12, 15, and 20 require a single parameter: a start date.
-            queries = {1: self.query_1, 12: self.query_12, 15: self.query_15, 20: self.query_20}
-            for number, query_f in queries.items():
-                date_1 = self.config['tpc_ch']['parameters']['singleDate'] \
-                    [i % len(self.config['tpc_ch']['parameters']['singleDate'])]['date1']
-
-                if not self._execute_and_log(query_f, number, i + 1, date_1=date_1):
-                    return
-
-            # Queries 6, 7, and 14 require two parameters: a start and end date.
-            queries = {6: self.query_6, 7: self.query_7, 14: self.query_14}
-            for number, query_f in queries.items():
-                date_pair = self.config['tpc_ch']['parameters']['pairDates'] \
-                    [i % len(self.config['tpc_ch']['parameters']['pairDates'])]
-                date_1, date_2 = date_pair['date1'], date_pair['date2']
-
-                if not self._execute_and_log(query_f, number, i + 1, date_1=date_1, date_2=date_2):
-                    return
-
-        for i in range(self.config['num_slow_queries']):
-            date_pair = self.config['tpc_ch']['parameters']['pairDates'] \
-                [i % len(self.config['tpc_ch']['parameters']['pairDates'])]
+            date_pair = self.config['tpc_ch']['parameters']['dateRange'] \
+                [i % len(self.config['tpc_ch']['parameters']['dateRange'])]
             date_1, date_2 = date_pair['date1'], date_pair['date2']
 
-            # Query 8 requires two parameters: a start and end date.
+            # Execute all queries.
+            self._execute_and_log(self.query_1, 1, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_6, 6, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_7, 7, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_12, 12, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_14, 14, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_15, 15, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_20, 20, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+
+        for i in range(self.config['num_slow_queries']):
+            date_pair = self.config['tpc_ch']['parameters']['dateRange'] \
+                [i % len(self.config['tpc_ch']['parameters']['dateRange'])]
+            date_1, date_2 = date_pair['date1'], date_pair['date2']
             self._execute_and_log(self.query_8, 8, i + 1, timeout=3600, date_1=date_1, date_2=date_2, hint='')
 
 
