@@ -4,6 +4,7 @@ import abc
 import time
 import requests
 import uuid
+import timeit
 
 from src.executor import AbstractBenchmarkRunnable
 
@@ -22,19 +23,26 @@ class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
         query_parameters = {
             'statement': lean_statement,
             'plan-format': 'STRING',
-            'profile': 'timings',
-            'rewritten-expression-tree': True,
             'optimized-logical-plan': True,
-            'expression-tree': True,
             'logical-plan': True,
             'job': True
         }
 
-        try:
-            response_json = requests.post(self.nc_uri, query_parameters, timeout=timeout).json()
-        except requests.exceptions.ReadTimeout as e:
-            logger.warning(f'Statement {statement} has run longer than the specified timeout {timeout}.')
-            response_json = {'status': f'Timeout. Exception: {str(e)}'}
+        # Retry the query until success.
+        while True:
+            try:
+                t_before = timeit.default_timer()
+                response_json = requests.post(self.nc_uri, query_parameters, timeout=timeout).json()
+                response_json['clientTime'] = timeit.default_timer() - t_before
+                break
+            except requests.exceptions.RequestException as e:
+                if timeout is not None and isinstance(e, requests.exceptions.ReadTimeout):
+                    logger.warning(f'Statement {statement} has run longer than the specified timeout {timeout}.')
+                    response_json = {'status': f'Timeout. Exception: {str(e)}'}
+                    break
+                else:
+                    logger.warning(f'Exception caught: {str(e)}. Restarting the query in 5 seconds...')
+                    time.sleep(5)
 
         if response_json['status'] != 'success':
             logger.warning(f'Status of executing statement {statement} not successful, '
