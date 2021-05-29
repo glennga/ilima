@@ -38,7 +38,7 @@ ilima-repo
   
 4. Clone this repository onto both the database server and database client node.
 
-5. Install the `requirements.txt` file for your Python environment on both the server and client nodes. To create a virtual environment (and subsequently launch this), run the commands below:
+5. Install the `requirements.txt` file for your Python environment on both the server and client nodes. To create a virtual environment (and subsequently launch this), run the commands below. For those more comfortable with `Docker`, a Dockerfile is also provided for your convenience.
 
    ```
    cd ilima

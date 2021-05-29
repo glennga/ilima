@@ -1,5 +1,4 @@
 # Database access.
-mysql-connector-python
 couchbase
 requests
 pymongo

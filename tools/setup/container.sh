@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Note: This is meant to be run on the machine to perform experiments on.
-USAGE_STRING="Usage: container.sh [asterixdb | couchbase | mongodb | mysql] [volume]"
+USAGE_STRING="Usage: container.sh [asterixdb | couchbase | mongodb ] [volume]"
 if [[ $# -ne 2 ]]; then
   echo "$USAGE_STRING"
   exit 1
@@ -76,47 +76,8 @@ elif [[ $1 == "mongodb" ]]; then
     --network="host" \
     ilima/mongodb
 
-elif [[ $1 == "mysql" ]]; then
-  echo "Launching instance of MySQL."
-  docker pull mysql
-  docker rm -f mysql_ || true
-  echo -e "
-    FROM mysql
-    RUN apt-get update && apt-get install -y wget \
-      locales \
-      apt-utils \
-      lsb-release
-    RUN wget https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb \
-      && DEBIAN_FRONTEND=noninteractive dpkg -i ./mysql-apt-config_0.8.16-1_all.deb \
-      && rm -f ./mysql-apt-config_0.8.16-1_all.deb
-    RUN apt-get install -y locales && \
-      sed -i -e 's/# en_US.UTF-8.*/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-      dpkg-reconfigure --frontend=noninteractive locales && \
-      update-locale LANG=en_US.UTF-8
-    RUN apt-get update && apt-get install -y mysql-shell
-    ENV MYSQL_ROOT_PASSWORD=$(jq -r .password config/mysql.json)
-    ENV MYSQL_USER=$(jq -r .username config/mysql.json)
-    ENV MYSQL_PASSWORD=$(jq -r .password config/mysql.json)
-    ENV MYSQL_DATABASE=$(jq -r .database config/mysql.json)
-  " | docker build -t ilima/mysql -f- .
-  docker run --detach \
-    --mount source=$2,destination=/resources \
-    --name mysql_ \
-    --network="host" \
-    ilima/mysql
-  echo "Waiting for container to spin up..."
-  sleep 20
-  docker exec mysql_ mysql \
-    --user "root" \
-    --password="$(jq -r .password config/couchbase.json)" \
-    --execute "
-      GRANT ALL PRIVILEGES ON *.*
-      TO '$(jq -r .username config/mysql.json)'@'%'
-      WITH GRANT OPTION;
-      FLUSH PRIVILEGES;
-    "
-
 else
   echo "$USAGE_STRING"
   exit 1
+
 fi

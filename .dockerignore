@@ -3,6 +3,7 @@
 /resources/shopalot/*
 
 # These directories are not used in our build either.
+/tools/analysis/*
 /.git/*
 /out/*
 /venv/*
