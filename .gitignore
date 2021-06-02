@@ -5,11 +5,12 @@
 /resources/*
 !/resources/sample.json
 
-# Tools that are specific to my system.
+# Tools for setup.
 !/tools/asterixdb/supervisord.conf
 !/tools/asterixdb/cc.conf
+
+# Tools that are specific to my system.
 /tools/asterixdb/*
 /tools/couchbase/*
 /tools/mongodb/*
-/tools/analysis/*
 /tools/config_sink.py
