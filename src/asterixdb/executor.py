@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractAsterixDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(working_system='AsterixDB', **kwargs)
         self.nc_uri = self.config['benchmark']['clusterController']['address'] + ':' + \
             str(self.config['benchmark']['clusterController']['port'])
         self.nc_uri = 'http://' + self.nc_uri + '/query/service'

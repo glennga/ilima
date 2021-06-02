@@ -38,6 +38,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
     def __init__(self, **kwargs):
         self.config = {**logging_json, **kwargs}
         logger.info(f'Using the following configuration: {self.config}')
+        self.working_system = kwargs['working_system']
         self.execution_id = str(uuid.uuid4())
 
         # Setup our benchmarking outputs (to analysis cluster, to file).
@@ -53,7 +54,7 @@ class AbstractBenchmarkRunnable(abc.ABC):
     def log_results(self, results):
         results['logTime'] = str(datetime.datetime.now())
         results['executionID'] = self.execution_id
-        results['configJSON'] = self.config
+        results['workingSystem'] = self.working_system
 
         # To the results file.
         if self.config['results']['isFile']:

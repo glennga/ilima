@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractMongoDBRunnable(AbstractBenchmarkRunnable, abc.ABC):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(working_system='MongoDB', **kwargs)
         self.database_uri = f'mongodb://{urllib.parse.quote_plus(self.config["username"])}:' \
                             f'{urllib.parse.quote_plus(self.config["password"])}@' \
                             f'{self.config["database"]["address"]}' + \

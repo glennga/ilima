@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(working_system='Couchbase', **kwargs)
         self.cluster_uri = 'couchbase://' + self.config['cluster']['address']
         self.bucket_name = self.config['cluster']['bucket']
 
