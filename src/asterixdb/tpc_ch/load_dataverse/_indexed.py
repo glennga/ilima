@@ -16,12 +16,24 @@ class LoadIndexedDataverse(AbstractLoadDataverseRunnable):
         self.log_results(results)
 
     def perform_benchmark(self):
-        logger.info('Building dataverse TPC_CH.')
-        self.create_dataverse()
-        logger.info('Creating array indexes on TPC_CH.')
-        self._create_indexes()
-        logger.info('Loading dataverse TPC_CH.')
-        self.load_dataverse()
+        results = self.execute_sqlpp(f"""
+            FROM    `Metadata`.`Dataset` D
+            WHERE   D.DataverseName = "TPC_CH" AND 
+                    D.DatasetName = "Orders"
+            SELECT  1;
+        """)
+        if len(results['results']) != 0:
+            logger.info('Orders dataset found. Skipping the database load.')
+            logger.info('Creating array indexes on TPC_CH.')
+            self._create_indexes()
+
+        else:
+            logger.info('Building dataverse TPC_CH.')
+            self.create_dataverse()
+            logger.info('Creating array indexes on TPC_CH.')
+            self._create_indexes()
+            logger.info('Loading dataverse TPC_CH.')
+            self.load_dataverse()
 
 
 if __name__ == '__main__':
