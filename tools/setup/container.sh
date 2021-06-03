@@ -6,6 +6,12 @@ if [[ $# -ne 2 ]]; then
   exit 1
 fi
 
+# Stop any docker containers.
+echo "Stopping running containers."
+docker stop asterixdb_ || true
+docker stop couchbase_ || true
+docker stop mongodb_ || true
+
 # Platform specific settings.
 if [[ $1 == "asterixdb" ]]; then
   echo "Launching instance of AsterixDB."
