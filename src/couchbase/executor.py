@@ -2,7 +2,7 @@ import logging
 import abc
 import time
 
-from couchbase.cluster import Cluster, ClusterOptions, QueryOptions, QueryProfile
+from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.diagnostics import ClusterState
 from couchbase.exceptions import BucketDoesNotExistException, ProtocolException
 from couchbase.management.buckets import CreateBucketSettings, BucketType
@@ -24,7 +24,7 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
         )))
         self.bucket, self.collection = None, None
 
-    def execute_cbimport(self, file_path, key="key::#UUID#"):
+    def execute_cbimport(self, file_path, collection='_default', key="key::#UUID#"):
         cbimport_command = self.config['loadCommand'][:-1] + [
             self.config['loadCommand'][-1] + ' ' + ' '.join(f"""
                 --cluster localhost
@@ -34,6 +34,7 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
                 --dataset {file_path}
                 --format lines
                 --generate-key {key}
+                --scope-collection-exp _default.{collection}
                 # --verbose
             """.split())
         ]
@@ -57,6 +58,20 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
 
         return response_json
 
+    def connect_bucket(self, max_retries=5):
+        for r in range(max_retries):
+            try:
+                logger.info('Attempting to connect to our bucket.')
+                self.bucket = self.cluster.bucket(self.bucket_name)
+                self.collection = self.bucket.default_collection()
+                return
+            except ProtocolException as e:
+                if r == max_retries - 1:
+                    raise e
+
+                logger.warning(f'Could not connect to bucket. Retrying in 3 seconds.')
+                time.sleep(3)
+
     def initialize_bucket(self):
         self.remove_bucket()  # Start from a clean bucket.
 
@@ -68,16 +83,7 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
             bucket_type=BucketType.COUCHBASE
         ))
         time.sleep(10)
-
-        while True:
-            try:
-                logger.info('Attempting to connect to our bucket.')
-                self.bucket = self.cluster.bucket(self.bucket_name)
-                self.collection = self.bucket.default_collection()
-                break
-            except ProtocolException:
-                logger.warning(f'Could not connect to bucket. Retrying in 3 seconds.')
-                time.sleep(3)
+        self.connect_bucket()
 
         response = self.execute_n1ql(f"CREATE PRIMARY INDEX naupakaPrimaryIdx ON `{self.bucket_name}` USING GSI;")
         if 'error' in response:
