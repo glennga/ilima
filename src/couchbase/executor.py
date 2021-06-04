@@ -1,6 +1,8 @@
 import logging
 import abc
 import time
+import timeit
+import datetime
 
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.diagnostics import ClusterState
@@ -40,14 +42,14 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
         ]
         return {'response': self.call_subprocess(cbimport_command)}
 
-    def execute_n1ql(self, statement):
+    def execute_n1ql(self, statement, timeout=None):
+        query_parameters = {} if timeout is None else {'timeout': datetime.timedelta(seconds=timeout)}
         lean_statement = ' '.join(statement.split())
         try:
-            response_iterable = self.cluster.query(lean_statement, QueryOptions(
-                profile=QueryProfile.TIMINGS,
-                metrics=True
-            ))
-            response_json = {'statement': lean_statement, 'results': []}
+            t_before = timeit.default_timer()
+            response_iterable = self.cluster.query(lean_statement, **query_parameters)
+            client_time = timeit.default_timer() - t_before
+            response_json = {'statement': lean_statement, 'results': [], 'clientTime': client_time}
             response_json = {**response_json, **response_iterable.meta}
             for record in response_iterable:
                 response_json['results'].append(record)

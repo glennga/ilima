@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class LoadIndexedBucket(AbstractLoadBucketRunnable):
-    def _create_indexes(self):
+    def _create_array_indexes(self):
         self.log_results(self.execute_n1ql(f"""
             CREATE INDEX orderlineDelivDateIdx ON {self.bucket_name}._default.Orders (
                 DISTINCT ARRAY OL.ol_delivery_d
@@ -30,7 +30,7 @@ class LoadIndexedBucket(AbstractLoadBucketRunnable):
         logger.info('Loading bucket for TPC_CH.')
         self.load_bucket()
         logger.info('Creating array indexes for TPC_CH.')
-        self._create_indexes()
+        self._create_array_indexes()
 
     def perform_benchmark(self):
         try:
@@ -57,7 +57,7 @@ class LoadIndexedBucket(AbstractLoadBucketRunnable):
 
         logger.info('All collections found.')
         logger.info('Creating array indexes for TPC_CH.')
-        self._create_indexes()
+        self._create_array_indexes()
 
 
 if __name__ == '__main__':
