@@ -2,15 +2,14 @@
   "username": "admin",
   "password": "password",
   "cluster": {
-    "ramsize": 2048,
-    "indexRamsize": 1024,
-    "ftsRamsize": 1024,
-    "address": "naupaka",
-    "bucket": "naupaka"
+    "ramsize": 4096,
+    "indexRamsize": 2048,
+    "address": "poinciana",
+    "bucket": "poinciana"
   },
   "loadCommand": [
     "ssh",
-    "glenn@naupaka",
+    "glenn@poinciana",
     "docker exec couchbase_ /opt/couchbase/bin/cbimport json"
   ],
   "benchmark": {

@@ -17,7 +17,7 @@ if [[ $1 == "asterixdb" ]]; then
   echo "Launching instance of AsterixDB."
   PACKAGE_PATH=$(jq -r .package config/asterixdb.json)
   echo "Copying package from ${PACKAGE_PATH}."
-  docker rm -f asterixdb_ || true
+  docker rm -f -v asterixdb_ || true
   docker pull ubuntu
   echo -e "
     FROM ubuntu:18.04
@@ -39,7 +39,7 @@ if [[ $1 == "asterixdb" ]]; then
 elif [[ $1 == "couchbase" ]]; then
   echo "Launching instance of Couchbase."
   docker pull couchbase
-  docker rm -f couchbase_ || true
+  docker rm -f -v couchbase_ || true
   echo -e "
     FROM couchbase:enterprise-7.0.0-beta
   " | docker build -t ilima/couchbase -f- .
@@ -53,10 +53,9 @@ elif [[ $1 == "couchbase" ]]; then
   docker exec couchbase_ /opt/couchbase/bin/couchbase-cli cluster-init \
     --cluster-username "$(jq -r .username config/couchbase.json)" \
     --cluster-password "$(jq -r .password config/couchbase.json)" \
-    --services data,index,query,fts \
+    --services data,index,query \
     --cluster-ramsize "$(jq -r .cluster.ramsize config/couchbase.json)" \
     --cluster-index-ramsize "$(jq -r .cluster.indexRamsize config/couchbase.json)" \
-    --cluster-fts-ramsize "$(jq -r .cluster.ftsRamsize config/couchbase.json)" \
     --index-storage-setting default
   sleep 1
   docker exec couchbase_ /opt/couchbase/bin/couchbase-cli bucket-create \
@@ -65,12 +64,13 @@ elif [[ $1 == "couchbase" ]]; then
     --password "$(jq -r .password config/couchbase.json)" \
     --bucket "$(jq -r .cluster.bucket config/couchbase.json)" \
     --bucket-type couchbase \
-    --bucket-ramsize "$(jq -r .cluster.ramsize config/couchbase.json)"
+    --bucket-ramsize "$(jq -r .cluster.ramsize config/couchbase.json)" \
+    --bucket-eviction-policy "fullEviction"
 
 elif [[ $1 == "mongodb" ]]; then
   echo "Launching instance of MongoDB."
   docker pull mongo
-  docker rm -f mongodb_ || true
+  docker rm -f -v mongodb_ || true
   echo -e "
     FROM mongo
     ENV MONGO_INITDB_ROOT_USERNAME=$(jq -r .username config/mongodb.json)
