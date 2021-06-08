@@ -34,12 +34,12 @@ class BasicAnalyticalQuery(AbstractQueryRunnable):
             date_1, date_2 = date_pair['date1'], date_pair['date2']
 
             # Execute all queries from query set 1 and all but one from query set 2.
-            self._execute_and_log(self.query_1, 1, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
-            self._execute_and_log(self.query_6, 6, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
-            self._execute_and_log(self.query_12, 12, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
-            self._execute_and_log(self.query_14, 14, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
-            self._execute_and_log(self.query_15, 15, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
-            self._execute_and_log(self.query_20, 20, i + 1, timeout=3600, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_1, 1, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_6, 6, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_12, 12, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_14, 14, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_15, 15, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
+            self._execute_and_log(self.query_20, 20, i + 1, timeout=1800, date_1=date_1, date_2=date_2)
 
 
 if __name__ == '__main__':

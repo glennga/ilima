@@ -7,7 +7,7 @@ import datetime
 from couchbase.cluster import Cluster, ClusterOptions
 from couchbase.diagnostics import ClusterState
 from couchbase.exceptions import BucketDoesNotExistException, ProtocolException
-from couchbase.management.buckets import CreateBucketSettings, BucketType
+from couchbase.management.buckets import CreateBucketSettings, BucketType, EvictionPolicyType
 from couchbase_core.cluster import PasswordAuthenticator
 from src.executor import AbstractBenchmarkRunnable
 
@@ -48,15 +48,15 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
         try:
             t_before = timeit.default_timer()
             response_iterable = self.cluster.query(lean_statement, **query_parameters)
-            client_time = timeit.default_timer() - t_before
-            response_json = {'statement': lean_statement, 'results': [], 'clientTime': client_time}
+            response_json = {'statement': lean_statement, 'results': []}
             response_json = {**response_json, **response_iterable.meta}
             for record in response_iterable:
                 response_json['results'].append(record)
+            response_json['clientTime'] = timeit.default_timer() - t_before
 
         except Exception as e:
             logger.warning(f'Status of executing statement {statement} not successful, but instead {e}.')
-            response_json = {'statement': lean_statement, 'results': [], 'error': str(e)}
+            response_json = {'statement': lean_statement, 'results': [], 'error': str(e), 'status': 'timeout'}
 
         return response_json
 
@@ -66,6 +66,7 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
                 logger.info('Attempting to connect to our bucket.')
                 self.bucket = self.cluster.bucket(self.bucket_name)
                 self.collection = self.bucket.default_collection()
+                time.sleep(3)
                 return
             except ProtocolException as e:
                 if r == max_retries - 1:
@@ -82,7 +83,8 @@ class AbstractCouchbaseRunnable(AbstractBenchmarkRunnable, abc.ABC):
         bucket_manager.create_bucket(CreateBucketSettings(
             name=self.bucket_name,
             ram_quota_mb=self.config['cluster']['ramsize'],
-            bucket_type=BucketType.COUCHBASE
+            bucket_type=BucketType.COUCHBASE,
+            eviction_policy=EvictionPolicyType.FULL
         ))
         time.sleep(10)
         self.connect_bucket()

@@ -65,7 +65,7 @@ class AbstractQueryRunnable(AbstractTPCCHRunnable, abc.ABC):
                     '$match': {'o_orderline.ol_delivery_d': {'$gte': date_1, '$lte': date_2}}
                 },
                 {
-                    '$match': {'o_entry_d': {'lte': '$o_orderline.ol_delivery_d'}}
+                    '$match': {'$expr': {'$lte': ['$o_entry_d', '$o_orderline.ol_delivery_d']}}
                 },
                 {
                     '$project': {
